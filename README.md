@@ -71,3 +71,4 @@ php artisan serve --port=8000
 php artisan install:api  //to get api routes
 php artisan route:list
 php artisan route:clear
+php artisan make:migration add-history-column-user --table=users

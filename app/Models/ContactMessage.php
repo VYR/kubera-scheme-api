@@ -19,5 +19,6 @@ class ContactMessage extends Model
         'message',
         'employee_reply',
         'status',
+        'contact_message_history',
     ];
 }
