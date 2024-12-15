@@ -1,0 +1,23 @@
+
+select
+        id,
+        json_extract(user_details, '$.signup_data.name') as name,
+        json_extract(user_details, '$.signup_data.email') as email,
+        json_extract(user_details, '$.signup_data.role') as role
+
+from users where json_extract(user_details, '$.signup_data.role') = 'DEVELOPER';
+
+
+
+select
+  id,
+  json_extract(user_details, '$.signup_data.name') as name,
+  json_extract(user_details, '$.signup_data.email') as email,
+  json_extract(user_details, '$.signup_data.role') as role,
+  json_extract(user_details, '$.signup_data.sub_role') as sub_role
+from  users where
+json_extract(user_details, '$.signup_data.role') = 'EMPLOYEE' and
+json_extract(user_details, '$.signup_data.sub_role') = 'DIGITAL_MARKETING';
+
+
+
