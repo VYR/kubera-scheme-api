@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Mail\EmailTemplate;
 use App\Models\Payment;
 use Illuminate\Support\Facades\Mail as FacadesMail;
+use Illuminate\Support\Facades\DB;
 
 class UserRepository implements UserRepositoryInterface
 {

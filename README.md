@@ -65,6 +65,9 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
+Websites:
+
+https://www.w3schools.com/php/func_date_date.asp
 
 Commands:
 php artisan serve --port=8000
@@ -72,3 +75,30 @@ php artisan install:api  //to get api routes
 php artisan route:list
 php artisan route:clear
 php artisan make:migration add-history-column-user --table=users
+
+
+ return DB::table('users')
+                ->select(
+                    'email as id',
+                    DB::raw('json_extract(user_details, "$.signup_data.name") as name'),
+                    DB::raw('json_extract(user_details, "$.signup_data.email") as email'),
+                    DB::raw('json_extract(user_details, "$.signup_data.role") as role'),
+                    DB::raw('json_extract(user_details, "$.signup_data.countryCode") as countryCode'),
+                    DB::raw('json_extract(user_details, "$.signup_data.phoneNumber") as phoneNumber'),
+                    DB::raw('json_extract(user_details, "$.signup_data.investment") as investment'),
+                    DB::raw('json_extract(user_details, "$.signup_data.whatsappUpdate") as whatsappUpdate'),
+                    'created_at',
+                    'updated_at'
+                )
+                ->where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+            ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
+
+update users set user_details = JSON_SET(user_details, "$.signup_data.status", "Active");
+
+UPDATE users SET user_details = JSON_MERGE(user_details, '{"status":"Active"}');
+
+
+update users set user_details = JSON_SET(user_details, "$.signup_data.role", "Active") WHERE JSON_EXTRACT(user_details, '$.signup_data.role')='SCHEME_MUMBER';
+
+
+select * from users WHERE JSON_EXTRACT(user_details, '$.signup_data.role')='SCHEME_MUMBER';
