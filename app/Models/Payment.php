@@ -22,6 +22,7 @@ class Payment extends Model
     {
         return [
             'payment_details' => 'array',
+            'payment_history' => 'array',
         ];
     }
 }

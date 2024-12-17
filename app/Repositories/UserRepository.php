@@ -177,6 +177,9 @@ class UserRepository implements UserRepositoryInterface
                     if(array_key_exists($key, $existingRecord['user_details']['signup_data'])){
                         $existingRecord['user_details']['signup_data'][$key]=$value;
                     }
+                    else{
+                        $existingRecord['user_details']['signup_data'][$key]=$value;
+                    }
                 }
                 $response->user_details=$existingRecord['user_details'];
                 if ($response->save()) {
