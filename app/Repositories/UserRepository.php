@@ -52,7 +52,8 @@ class UserRepository implements UserRepositoryInterface
             return User::where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
             ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
         else
-            return User::orderByDesc('created_at')->get();
+            return User::orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+            ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
     }
     public function findById($id){
 

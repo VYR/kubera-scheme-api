@@ -16,7 +16,24 @@ class PaymentRepository implements PaymentRepositoryInterface
     {
         //
     }
-
+    public function readDataParams($params=array()){
+        $parameters=config('app-constants.paginationParams', []);
+        foreach ($parameters as $key => $value) {
+            if(key_exists($key,$params)){
+                if($key==='pageIndex'){
+                    if($params['pageIndex']===0){
+                        $parameters['pageIndex']=1;
+                    }
+                    else if($params['pageIndex']>0){
+                        $parameters['pageIndex']=$params['pageIndex']+1;
+                    }
+                }
+                else
+                $parameters[$key]=$params[$key];
+            }
+        }
+        return $parameters;
+    }
     public function updatePaymentDetails(array $data){
         $this->logMe(message:'start updatePaymentDetails() Repository',data:['file' => __FILE__, 'line' => __LINE__]);
         try{
@@ -150,11 +167,32 @@ class PaymentRepository implements PaymentRepositoryInterface
     public function getAllPayments(array $data){
         $this->logMe(message:'start getAllPayments() Repository',data:['file' => __FILE__, 'line' => __LINE__]);
         try{
-            return Payment::orderByDesc('created_at')->get();
+            // return Payment::orderByDesc('created_at')->get();
+             $conditions=[];
+        $pagingParams=$this->readDataParams($data);
+        if(array_key_exists('userId', $data)){
+            array_push($conditions,["userId",'=', $data['userId']]);
+        }
+        if(array_key_exists('paymentFor', $data)){
+            array_push($conditions,["payment_details->paymentFor",'=', strtoupper($data['paymentFor'])]);
+        }
+        if(array_key_exists('txnNo', $data)){
+            array_push($conditions,["payment_details->txnNo",'=', strtoupper($data['txnNo'])]);
+        }
+        if(array_key_exists('payment_mode', $data)){
+            array_push($conditions,["payment_details->payment_mode",'=', strtoupper($data['payment_mode'])]);
+        }
+        if(count($conditions)>0)
+            return Payment::where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+            ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
+        else
+            return Payment::orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+            ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
         }catch(\Exception $e){
             $this->logMe(message:'end getAllPayments() Exception',data:['file' => __FILE__, 'line' => __LINE__]);
             throw new GlobalException(errCode:404,data:$data, errMsg: $e->getMessage());
         }
+
     }
     function sendPaymentEmail($data){
         $this->logMe(message:'start sendEmail()',data:['file' => __FILE__, 'line' => __LINE__]);
