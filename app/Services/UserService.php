@@ -42,6 +42,7 @@ class UserService implements UserInterface
                 ...$request->all(),
                 'website'=> $request->header('website'),
                 'userId'=> $data['email'],
+                'status'=>  "Active"
             ]];
             /**Call micro service */
             $services=config('app-constants.MICRO_SERVICES');

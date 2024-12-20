@@ -101,6 +101,7 @@ class UserRepository implements UserRepositoryInterface
             $user=new User();
             $user->fill($data);
             $user->user_details=$data['user_details'];
+            $user->user_history=$data['user_details'];
             $resp['status']=$user->save();
             $this->sendSignupMessage($data);
             return $resp;
