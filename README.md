@@ -76,7 +76,12 @@ php artisan route:list
 php artisan route:clear
 php artisan make:migration add-history-column-user --table=users
 
-
+//Search 
+Model::where('data->name', 'LIKE', '%wat%')->get();
+//sorting
+->orderBy('column_name->json_key')
+->orderByRaw('CAST(JSON_EXTRACT(json_column, "$.json_key") AS unsigned)', 'asc') //correct one
+//select json column
  return DB::table('users')
                 ->select(
                     'email as id',
@@ -102,3 +107,5 @@ update users set user_details = JSON_SET(user_details, "$.signup_data.role", "Ac
 
 
 select * from users WHERE JSON_EXTRACT(user_details, '$.signup_data.role')='SCHEME_MUMBER';
+
+

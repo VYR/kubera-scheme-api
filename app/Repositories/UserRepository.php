@@ -48,12 +48,15 @@ class UserRepository implements UserRepositoryInterface
         if(array_key_exists('role', $data)){
             array_push($conditions,["user_details->signup_data->role",'=', strtoupper($data['role'])]);
         }
+        $query=new User();
         if(count($conditions)>0)
-            return User::where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+            return $query->where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
             ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
         else
-            return User::orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+            return $query->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
             ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
+       // DB::table('users')->orderByRaw('CAST(JSON_EXTRACT(payment_details, "$."'.pagingParams[config('app-constants.pagingKeys.sortKey')].') AS )',pagingParams[config('app-constants.pagingKeys.sortDirection')])
+
     }
     public function findById($id){
 
