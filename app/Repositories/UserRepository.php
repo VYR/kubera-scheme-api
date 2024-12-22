@@ -41,6 +41,7 @@ class UserRepository implements UserRepositoryInterface
     }
     public function getEntireTableData($data=[]){
         $conditions=[];
+        $directSearchKeys=['email','created_at','updated_at'];
         $pagingParams=$this->readDataParams($data);
         if(array_key_exists('website', $data)){
             array_push($conditions,["user_details->signup_data->website",'=', $data['website']]);
@@ -50,12 +51,15 @@ class UserRepository implements UserRepositoryInterface
         }
         $query=new User();
         if(count($conditions)>0)
-            return $query->where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
-            ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
+            $query =$query->where($conditions);
+        if(in_array($pagingParams[config('app-constants.pagingKeys.sortKey')],$directSearchKeys))
+            $query =$query->orderBy($pagingParams[config('app-constants.pagingKeys.sortKey')],$pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         else
-            return $query->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+        $query =$query->orderBy('user_details->signup_data->'.$pagingParams[config('app-constants.pagingKeys.sortKey')],$pagingParams[config('app-constants.pagingKeys.sortDirection')]);
+        //$query =$query->orderByRaw('CAST(JSON_EXTRACT(user_details, "$.signup_data.'.$pagingParams[config('app-constants.pagingKeys.sortKey')].'") AS '.$pagingParams[config('app-constants.pagingKeys.sortKey')].')',$pagingParams[config('app-constants.pagingKeys.sortDirection')]);
+        return $query->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
             ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
-       // DB::table('users')->orderByRaw('CAST(JSON_EXTRACT(payment_details, "$."'.pagingParams[config('app-constants.pagingKeys.sortKey')].') AS )',pagingParams[config('app-constants.pagingKeys.sortDirection')])
+
 
     }
     public function findById($id){
