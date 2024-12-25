@@ -19,5 +19,7 @@ interface UserInterface
     public function updateDeliveryAddress(Request $request);
     public function addContactMessages(Request $request);
     public function updateContactMessages(Request $request);
+    public function deleteUser(Request $request);
+
 
 }

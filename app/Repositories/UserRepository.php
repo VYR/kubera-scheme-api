@@ -658,5 +658,43 @@ class UserRepository implements UserRepositoryInterface
         }
     }
 
+    public function deleteUser(array $data){
+        $this->logMe(message:'start deleteUser()',data:['file' => __FILE__, 'line' => __LINE__]);
+        try{
+            if(!array_key_exists('userId', $data)){
+                return [
+                    'msg'=> " User Id key is mandatory",
+                    'status' => false
+                ];
+            }
+            $conditions=[
+                ["email",'=', $data['userId']]
+            ];
+            $response=User::where($conditions)->first();
+            if(is_null($response)){
+                return [
+                    'msg'=> "Invalid User",
+                    'status' => false
+                ];
+            }
+            else{
+                if ($response->delete()) {
+                    return [
+                        'msg'=> " User Deleted Successfully",
+                        'status' => true
+                    ];
+                }
+                else{
+                    return [
+                        'msg'=> "Unable to Delete user",
+                        'status' => false
+                    ];
+                }
+            }
+        }catch(\Exception $e){
+            $this->logMe(message:'start deleteUser()',data:['file' => __FILE__, 'line' => __LINE__]);
+            throw new GlobalException(errCode:404,data:$data, errMsg: $e->getMessage());
+        }
+    }
 
 }

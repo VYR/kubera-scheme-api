@@ -19,6 +19,7 @@ Route::group([
         Route::post('/complete-kyc', [UserController::class,'completeKyc']);
         Route::post('/send-otp', [UserController::class,'sendOtpByMobile']);
         Route::post('/verify-otp', [UserController::class,'verifyOtp']);
+        Route::post('/delete', [UserController::class,'deleteUser']);
 
         Route::post('/get-aadhar-url', [UserController::class,'getAadharUrl']);
         Route::post('/update-bank-details', [UserController::class,'updateBankDetails']);

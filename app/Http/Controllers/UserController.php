@@ -48,5 +48,9 @@ class UserController extends Controller
         $this->logMe(message:'verifyOtp()',data:['file' => __FILE__, 'line' => __LINE__]);
         return $this->userInterface->verifyOtp($request);
     }
+    public function deleteUser(Request $request){
+        $this->logMe(message:'verifyOtp()',data:['file' => __FILE__, 'line' => __LINE__]);
+        return $this->userInterface->deleteUser($request);
+    }
 
 }

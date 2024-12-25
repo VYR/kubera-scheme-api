@@ -20,5 +20,8 @@ interface UserRepositoryInterface
     public function updateDeliveryAddress(array $data);
     public function addContactMessages(array $data);
     public function updateContactMessages(array $data);
+    public function deleteUser(array $data);
+
+
 
 }
