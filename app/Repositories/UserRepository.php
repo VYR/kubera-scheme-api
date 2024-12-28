@@ -68,6 +68,13 @@ class UserRepository implements UserRepositoryInterface
 
     }
 
+    public function getSettings($data = [])
+    {
+
+        return Setting::all();
+
+    }
+
     public function findById($id) {}
 
     public function findByEmail($email) {}
@@ -224,6 +231,12 @@ class UserRepository implements UserRepositoryInterface
                     'status' => false,
                 ];
             }
+            if (! array_key_exists('setting_details', $data)) {
+                return [
+                    'msg' => ' Setting Details is mandatory',
+                    'status' => false,
+                ];
+            }
             $conditions = [
                 ['setting_name', '=', $data['setting_name']],
             ];
@@ -235,7 +248,7 @@ class UserRepository implements UserRepositoryInterface
                 ];
             } else {
                 $existingRecord = $response->toArray();
-                foreach ($data as $key => $value) {
+                foreach ($data['setting_details'] as $key => $value) {
                     if (array_key_exists($key, $existingRecord['setting_details'])) {
                         $existingRecord['setting_details'][$key] = $value;
                     } else {

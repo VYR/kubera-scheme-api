@@ -200,6 +200,30 @@ class UserService implements UserInterface
         }
     }
 
+    public function getSettings(Request $request)
+    {
+        $this->logMe(message: 'start getSettings()', data: ['file' => __FILE__, 'line' => __LINE__]);
+        /* Create response data */
+        $response = [
+            'data' => [],
+            'statusCode' => 200,
+        ];
+        $data = $request->all();
+
+        try {
+            $dbStatus = $this->userRepository->getSettings($data);
+            $response['data'] = $dbStatus;
+            $response['msg'] = config('app-constants.RESPONSE.MSG.GET_DATA_SUCCESSFUL');
+            $this->logMe(message: 'end getSettings()', data: ['file' => __FILE__, 'line' => __LINE__]);
+
+            /*send response data */
+            return $this->sendResponse($response['statusCode'], $response['msg'], $response['data'], '');
+        } catch (\Exception $e) {
+            $this->logMe(message: 'end getSettings() at Exception', data: ['file' => __FILE__, 'line' => __LINE__]);
+            throw new GlobalException(data: $response, errMsg: $e->getMessage());
+        }
+    }
+
     public function getEntireTableData(Request $request)
     {
         $this->logMe(message: 'start getEntireTableData()', data: ['file' => __FILE__, 'line' => __LINE__]);
@@ -594,33 +618,32 @@ class UserService implements UserInterface
         }
     }
 
-
     public function deleteUser(Request $request)
     {
-        $this->logMe(message:'start deleteUser()',data:['file' => __FILE__, 'line' => __LINE__]);
-        $response=[
+        $this->logMe(message: 'start deleteUser()', data: ['file' => __FILE__, 'line' => __LINE__]);
+        $response = [
             'data' => [],
-            'msg'=> '',
-            'statusCode'=> 200
+            'msg' => '',
+            'statusCode' => 200,
         ];
-        $data=$request->all();
-        try{
-            $dbStatus=$this->userRepository->deleteUser($data);
-            if($dbStatus['status']){
-                $response['statusCode']=200;
-                $response['msg']= $dbStatus['msg'];
+        $data = $request->all();
+        try {
+            $dbStatus = $this->userRepository->deleteUser($data);
+            if ($dbStatus['status']) {
+                $response['statusCode'] = 200;
+                $response['msg'] = $dbStatus['msg'];
+            } else {
+                $response['statusCode'] = 404;
+                $response['msg'] = $dbStatus['msg'];
             }
-            else {
-                $response['statusCode']=404;
-                $response['msg']= $dbStatus['msg'];
-            }
-            $this->logMe(message:'end deleteUser()',data:['file' => __FILE__, 'line' => __LINE__]);
-            $this->logMe(message:json_encode($dbStatus),data:['file' => __FILE__, 'line' => __LINE__]);
-            return $this->sendResponse($response['statusCode'],$response['msg'],$response['data'],'');
-        }catch(\Exception $e){
-            $this->logMe(message:'end deleteUser() Exception',data:['file' => __FILE__, 'line' => __LINE__]);
-            $this->logMe(message: $e->getMessage(),data:['file' => __FILE__, 'line' => __LINE__]);
-            throw new GlobalException(errCode:404,data:$data, errMsg: $e->getMessage());
+            $this->logMe(message: 'end deleteUser()', data: ['file' => __FILE__, 'line' => __LINE__]);
+            $this->logMe(message: json_encode($dbStatus), data: ['file' => __FILE__, 'line' => __LINE__]);
+
+            return $this->sendResponse($response['statusCode'], $response['msg'], $response['data'], '');
+        } catch (\Exception $e) {
+            $this->logMe(message: 'end deleteUser() Exception', data: ['file' => __FILE__, 'line' => __LINE__]);
+            $this->logMe(message: $e->getMessage(), data: ['file' => __FILE__, 'line' => __LINE__]);
+            throw new GlobalException(errCode: 404, data: $data, errMsg: $e->getMessage());
         }
     }
 }
