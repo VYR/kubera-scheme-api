@@ -168,8 +168,11 @@ class PaymentRepository implements PaymentRepositoryInterface
         $this->logMe(message:'start getAllPayments() Repository',data:['file' => __FILE__, 'line' => __LINE__]);
         try{
             // return Payment::orderByDesc('created_at')->get();
-             $conditions=[];
+             $conditions=[
+                'payment_details->amount_paid' => 1000000
+             ];
         $pagingParams=$this->readDataParams($data);
+
         if(array_key_exists('userId', $data)){
             array_push($conditions,["userId",'=', $data['userId']]);
         }
@@ -177,15 +180,21 @@ class PaymentRepository implements PaymentRepositoryInterface
             array_push($conditions,["payment_details->paymentFor",'=', strtoupper($data['paymentFor'])]);
         }
         if(array_key_exists('txnNo', $data)){
-            array_push($conditions,["payment_details->txnNo",'=', strtoupper($data['txnNo'])]);
+            array_push($conditions,["payment_details->txnNo",'=', $data['txnNo']]);
         }
         if(array_key_exists('payment_mode', $data)){
             array_push($conditions,["payment_details->payment_mode",'=', strtoupper($data['payment_mode'])]);
         }
         if(count($conditions)>0)
+            if(array_key_exists('no_paging', $data))
+            return Payment::where($conditions)->orderByDesc('created_at')->get();
+            else
             return Payment::where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
             ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
         else
+            if(array_key_exists('no_paging', $data))
+            return Payment::orderByDesc('created_at')->get();
+            else
             return Payment::orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
             ['*'],'users',$pagingParams[config('app-constants.pagingKeys.pageIndex')]);
         }catch(\Exception $e){

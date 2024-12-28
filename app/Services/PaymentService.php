@@ -128,4 +128,124 @@ class PaymentService implements PaymentInterface
             throw new GlobalException(errCode:404,data:$data, errMsg: $e->getMessage());
         }
     }
+
+    public function getKuberaCalculation(Request $request)
+    {
+        $this->logMe(message:'start getKuberaCalculation() Service',data:['file' => __FILE__, 'line' => __LINE__]);
+        $response=[
+            'data' => [],
+            'msg'=> '',
+            'statusCode'=> 200
+        ];
+        $data=$request->all();
+        $data['website']= $request->header('website');
+        try{
+            $response['statusCode']=200;
+            $response['msg']= 'calculation Details received successfully';
+            $data['no_paging']=true;
+            $rec= $this->paymentRepository->getAllPayments($data);
+            $calculations=[];
+            if(count($rec)>0)
+            {
+                $dbRec=$rec[0]->payment_details;
+                $dbDate=$rec[0]->created_at;
+                $goldAPIData=$this->handleMicroServiceGetRequest('https://vibullion.com/get-gold-live-rate');
+                $goldRateINR=round(floatval(((array)$goldAPIData)["0"]->Ask)/10,2);
+                $markingPercent=config('app-constants.PAYMENT.GOLD_MAKING_CHARGES');
+                $goldGST=config('app-constants.PAYMENT.GOLD_GST');
+                $investmentAmount=$dbRec['amount_paid'];
+                $monthlyPayout=($investmentAmount*2)/40; /*double investment/40 Months*/
+                /*Monthly payout is divided as half principle and half intrest */
+                $principleOnMonthlyPayout=$monthlyPayout/2;
+                $intrestOnMonthlyPayout=$monthlyPayout/2;
+                $openingBalance=$investmentAmount;
+                $tdsOnIntrest=config('app-constants.PAYMENT.TDS_ON_INTREST');
+                $tdsAmount=$intrestOnMonthlyPayout*($tdsOnIntrest/100);
+                $InvestmentInvoiceValue=$monthlyPayout-$tdsAmount;
+
+                for($i=1;$i<=40;$i++){
+                    /**
+                     *Excel part-1
+                    */
+                    $mcxPrice=$goldRateINR;
+                    //$mcxPrice=7576;
+                    $makingCharges=$mcxPrice*($markingPercent/100);
+                    $marketPrice=$mcxPrice+$makingCharges;
+                    $gstOnMarketPrice=$marketPrice*($goldGST/100);
+                    $goldInvoiceValue=intval($marketPrice+$gstOnMarketPrice);
+
+                    /**
+                     * investment amount
+                     */
+                    $noOfGrams=bcdiv($InvestmentInvoiceValue,$goldInvoiceValue,4);
+                    $closingBal=$openingBalance-$intrestOnMonthlyPayout;
+                    /**
+                     * final value
+                     */
+                    $date=date('Y-m-d',strtotime($dbDate));
+                    $row=[
+                        'date' => $date,
+                        'month' => $i,
+                        'marketPrice' => round($marketPrice,2),
+                        'mcxPrice' => $mcxPrice,
+                        'makingCharges' => round($makingCharges,2),
+                        'gstOnMarketPrice' => round($gstOnMarketPrice,2),
+                        'goldInvoiceValue' => $goldInvoiceValue,
+                        'openingBal' => $openingBalance,
+                        'receivedAmount' => $investmentAmount,
+                        'monthlyPayout' => $monthlyPayout,
+                        'intrest' => $intrestOnMonthlyPayout,
+                        'principle' => $principleOnMonthlyPayout,
+                        'closingBal' => $closingBal,
+                        'tdsAmount' => $tdsAmount,
+                        'investmentInvoiceValue' => $InvestmentInvoiceValue,
+                        'noOfGrams' => $noOfGrams
+
+                    ];
+                    array_push($calculations,$row);
+                    /*closing will be opening for next month*/
+                    $openingBalance=$closingBal;
+                    // Convert the date string "2012-12-21" to a Unix timestamp
+                    $dt = strtotime($date);
+                    // Add 1 month to the given date using strtotime() function
+                    // and output the result in the format "Y-m-d"
+                    $dbDate= date("Y-m-d h:i:s A", strtotime("+1 month", $dt));
+                    //if($i===1) break;
+                }
+                $response['data']= $calculations;
+            }
+
+          // $response['data1']= round($goldAPIData[0]['Ask'],2);
+            $this->logMe(message:'end getKuberaCalculation() Service',data:['file' => __FILE__, 'line' => __LINE__]);
+             return $this->sendResponse($response['statusCode'],$response['msg'],$response['data'],'');
+        }catch(\Exception $e){
+            $this->logMe(message:'end getKuberaCalculation() Exception',data:['file' => __FILE__, 'line' => __LINE__]);
+            $this->logMe(message: $e->getMessage(),data:['file' => __FILE__, 'line' => __LINE__]);
+            throw new GlobalException(errCode:404,data:$data, errMsg: $e->getMessage());
+        }
+    }
+    private function handleMicroServiceGetRequest( $url){
+        $this->logMe(message:'start handleMicroServiceGetRequest()',data:['file' => __FILE__, 'line' => __LINE__]);
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_ENCODING => '',
+        CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'GET',
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+        $this->logMe(message:'serviceOutput handleMicroServiceGetRequest()',data:['url' => $url]);
+        $this->logMe(message:'serviceOutput handleMicroServiceGetRequest()',data:['response' => $response]);
+        $this->logMe(message:'end handleMicroServiceGetRequest()',data:['file' => __FILE__, 'line' => __LINE__]);
+        return json_decode($response);
+
+    }
 }

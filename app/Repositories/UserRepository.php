@@ -10,7 +10,6 @@ use App\Models\ContactMessage;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail as FacadesMail;
 
 class UserRepository implements UserRepositoryInterface
@@ -45,6 +44,7 @@ class UserRepository implements UserRepositoryInterface
     public function getEntireTableData($data = [])
     {
         $conditions = [];
+        $directSearchKeys = ['email', 'created_at', 'updated_at'];
         $pagingParams = $this->readDataParams($data);
         if (array_key_exists('website', $data)) {
             array_push($conditions, ['user_details->signup_data->website', '=', $data['website']]);
@@ -54,13 +54,17 @@ class UserRepository implements UserRepositoryInterface
         }
         $query = new User;
         if (count($conditions) > 0) {
-            return $query->where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
-                ['*'], 'users', $pagingParams[config('app-constants.pagingKeys.pageIndex')]);
-        } else {
-            return $query->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
-                ['*'], 'users', $pagingParams[config('app-constants.pagingKeys.pageIndex')]);
+            $query = $query->where($conditions);
         }
-        // DB::table('users')->orderByRaw('CAST(JSON_EXTRACT(payment_details, "$."'.pagingParams[config('app-constants.pagingKeys.sortKey')].') AS )',pagingParams[config('app-constants.pagingKeys.sortDirection')])
+        if (in_array($pagingParams[config('app-constants.pagingKeys.sortKey')], $directSearchKeys)) {
+            $query = $query->orderBy($pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
+        } else {
+            $query = $query->orderBy('user_details->signup_data->'.$pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
+        }
+
+        //$query =$query->orderByRaw('CAST(JSON_EXTRACT(user_details, "$.signup_data.'.$pagingParams[config('app-constants.pagingKeys.sortKey')].'") AS '.$pagingParams[config('app-constants.pagingKeys.sortKey')].')',$pagingParams[config('app-constants.pagingKeys.sortDirection')]);
+        return $query->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+            ['*'], 'users', $pagingParams[config('app-constants.pagingKeys.pageIndex')]);
 
     }
 
@@ -703,6 +707,44 @@ class UserRepository implements UserRepositoryInterface
 
         } catch (\Exception $e) {
             $this->logMe(message: 'end updateDeliveryAddress() Exception', data: ['file' => __FILE__, 'line' => __LINE__]);
+            throw new GlobalException(errCode: 404, data: $data, errMsg: $e->getMessage());
+        }
+    }
+
+    public function deleteUser(array $data)
+    {
+        $this->logMe(message: 'start deleteUser()', data: ['file' => __FILE__, 'line' => __LINE__]);
+        try {
+            if (! array_key_exists('userId', $data)) {
+                return [
+                    'msg' => ' User Id key is mandatory',
+                    'status' => false,
+                ];
+            }
+            $conditions = [
+                ['email', '=', $data['userId']],
+            ];
+            $response = User::where($conditions)->first();
+            if (is_null($response)) {
+                return [
+                    'msg' => 'Invalid User',
+                    'status' => false,
+                ];
+            } else {
+                if ($response->delete()) {
+                    return [
+                        'msg' => ' User Deleted Successfully',
+                        'status' => true,
+                    ];
+                } else {
+                    return [
+                        'msg' => 'Unable to Delete user',
+                        'status' => false,
+                    ];
+                }
+            }
+        } catch (\Exception $e) {
+            $this->logMe(message: 'start deleteUser()', data: ['file' => __FILE__, 'line' => __LINE__]);
             throw new GlobalException(errCode: 404, data: $data, errMsg: $e->getMessage());
         }
     }

@@ -18,6 +18,7 @@ Route::group([
         Route::post('/complete-kyc', [UserController::class, 'completeKyc']);
         Route::post('/send-otp', [UserController::class, 'sendOtpByMobile']);
         Route::post('/verify-otp', [UserController::class, 'verifyOtp']);
+        Route::post('/delete', [UserController::class, 'deleteUser']);
 
         Route::post('/get-aadhar-url', [UserController::class, 'getAadharUrl']);
         Route::post('/update-bank-details', [UserController::class, 'updateBankDetails']);
@@ -34,6 +35,7 @@ Route::group([
         Route::post('/add', [PaymentController::class, 'addPaymentDetails']);
         Route::post('/get-by-user', [PaymentController::class, 'getPaymentsByUser']);
         Route::post('/all-users', [PaymentController::class, 'getAllPayments']);
+        Route::post('/get-kubera-scheme-calculation', [PaymentController::class, 'getKuberaCalculation']);
 
     });
     /**Single Content routes */

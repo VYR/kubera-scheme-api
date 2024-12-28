@@ -10,6 +10,8 @@ interface PaymentInterface
     public function addPaymentDetails(Request $request);
     public function getPaymentsByUser(Request $request);
     public function getAllPayments(Request $request);
+    public function getKuberaCalculation(Request $request);
+
 
 
 }

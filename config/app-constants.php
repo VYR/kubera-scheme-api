@@ -69,5 +69,10 @@ return [
         ],
         'SAVE_GOLD_SCHEME_URL' => 'http://localhost:8002/api/',
         'SAVE_GOLD_SCHEME_URL_PROD' => 'https://savegoldscheme.com/back-end/public/api/'
+    ],
+    'PAYMENT' => [
+        'GOLD_GST' => 3,
+        'GOLD_MAKING_CHARGES' => 3,
+        'TDS_ON_INTREST' => 10
     ]
 ];
