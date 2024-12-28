@@ -35,6 +35,7 @@ Route::group([
         Route::post('/add', [PaymentController::class,'addPaymentDetails']);
         Route::post('/get-by-user', [PaymentController::class,'getPaymentsByUser']);
         Route::post('/all-users', [PaymentController::class,'getAllPayments']);
+        Route::post('/get-kubera-scheme-calculation', [PaymentController::class,'getKuberaCalculation']);
 
     });
     /**Single Content routes */

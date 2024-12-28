@@ -108,4 +108,48 @@ update users set user_details = JSON_SET(user_details, "$.signup_data.role", "Ac
 
 select * from users WHERE JSON_EXTRACT(user_details, '$.signup_data.role')='SCHEME_MUMBER';
 
+SELECT email FROM users ORDER BY RAND() LIMIT 20;
 
+//update referral code
+update users set user_details = JSON_SET(user_details, "$.signup_data.referralCode", 17342053862127131) WHERE email IN(select email from users where email!=17342053862127131 and JSON_EXTRACT(user_details, '$.signup_data.referralCode')!=17342053862127131 order by rand() limit 2);
+
+
+
+select email from users where email!=17342053862127131 and JSON_EXTRACT(user_details, '$.signup_data.referralCode')!=17342053862127131 and JSON_EXTRACT(user_details, '$.signup_data.role')='SCHEME_MUMBER' order by rand() limit 20;
+
+
+
+//get only schemembers randomly
+select email from users WHERE JSON_EXTRACT(user_details, '$.signup_data.role')='SCHEME_MEMBER' order by rand() limit 10; 
+17342057631538516,
+  17342054635359142,
+  17342055949615265,
+  17342054727020945,
+  17342053868351203,
+  17342068122386148,
+  17342067114076531,
+  17342056857364768,
+  17342055155972515,
+  17342056407139774
+
+//clear referral codes
+update users set user_details = JSON_SET(user_details, "$.signup_data.referralCode", '');
+
+//update referral code in json 
+update users set user_details = JSON_SET(user_details, "$.signup_data.referralCode", 17342057631538516) WHERE email IN(17342057631538516,
+  17342054635359142,
+  17342055949615265,
+  17342054727020945,
+  17342053868351203,
+  17342068122386148,
+  17342067114076531,
+  17342056857364768,
+  17342055155972515,
+  17342056407139774);
+
+  //Get referrals of a member
+
+
+
+  //Get referrals paid
+  select * from payments where userId IN(select email from users where JSON_EXTRACT(user_details, '$.signup_data.referralCode')=17342057631538516);
