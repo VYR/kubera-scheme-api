@@ -9,6 +9,7 @@ interface UserInterface
     public function signup(Request $request);
     public function login(Request $request);
     public function updateUserDetails(Request $request);
+    public function updateSettings(Request $request);
     public function completeKyc(Request $request);
     public function sendOtpByMobile(Request $request);
     public function verifyOtp(Request $request);
