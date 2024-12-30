@@ -149,3 +149,8 @@ update users set user_details = JSON_SET(user_details, "$.signup_data.referralCo
 
 //Get referrals paid
 select \* from payments where userId IN(select email from users where JSON_EXTRACT(user_details, '$.signup_data.referralCode')=17342057631538516);
+
+
+
+SELECT * FROM payments WHERE created_at + INTERVAL 1500 DAY <= NOW();
+SELECT * FROM payments WHERE created_at + INTERVAL 1500 DAY <= '2024-12-05';

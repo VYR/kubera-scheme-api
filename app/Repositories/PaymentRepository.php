@@ -37,34 +37,55 @@ class PaymentRepository implements PaymentRepositoryInterface
     public function updatePaymentDetails(array $data){
         $this->logMe(message:'start updatePaymentDetails() Repository',data:['file' => __FILE__, 'line' => __LINE__]);
         try{
-            if(!array_key_exists('userId', $data)){
+            if(!array_key_exists('payment_id', $data)){
                 return [
-                    'msg'=> " User Id key is mandatory",
-                    'status' => false
-                ];
-            }
-            if(!array_key_exists('bank_details', $data)){
-                return [
-                    'msg'=> " Bank details key is mandatory",
+                    'msg'=> " Payment Id key is mandatory",
                     'status' => false
                 ];
             }
             $conditions=[
-                ["id",'=', $data['userId']]
+                ["id",'=', $data['payment_id']]
             ];
-            $response=User::where($conditions)->first();
+            $response=Payment::where($conditions)->first();
             if(is_null($response)){
                 return [
-                    'msg'=> "Invalid User",
+                    'msg'=> "Invalid Payment Id",
                     'status' => false
                 ];
             }
             else{
-                $response->bank_details=$data['payment_details'];
+                $existingRecord = $response->toArray();
+                foreach ($data as $key => $value) {
+                    if (array_key_exists($key, $existingRecord['payment_details'])) {
+
+                        if ($key==='delivery_details' && array_key_exists('delivery_details', $existingRecord['payment_details'])) {
+                            if(!in_array($value['month'], array_column($existingRecord['payment_details']['delivery_details'], 'month')))
+                                array_push($existingRecord['payment_details']['delivery_details'],$value);
+                            else
+                            {
+                                foreach ($existingRecord['payment_details']['delivery_details'] as $k => $v) {
+                                    if($value['month']===$v['month'])
+                                    $existingRecord['payment_details']['delivery_details'][$k]=$value;
+                                }
+                            }
+                            //$existingRecord['payment_details']['delivery_details']=[];
+                        }
+                        else
+                        $existingRecord['payment_details'][$key] = $value;
+                    } else {
+                        if ($key==='delivery_details') {
+                            $existingRecord['payment_details'][$key] =[$value];
+                        }
+                        else
+                        $existingRecord['payment_details'][$key] = $value;
+                    }
+                }
+                $response->payment_details = $existingRecord['payment_details'];
                 if ($response->save()) {
                     return [
                         'msg'=> " Payment Details Updated Successfully",
-                        'status' => true
+                        'status' => true,
+                        'data' => ''
                     ];
                 }
                 else{
@@ -168,9 +189,7 @@ class PaymentRepository implements PaymentRepositoryInterface
         $this->logMe(message:'start getAllPayments() Repository',data:['file' => __FILE__, 'line' => __LINE__]);
         try{
             // return Payment::orderByDesc('created_at')->get();
-             $conditions=[
-                'payment_details->amount_paid' => 1000000
-             ];
+             $conditions=[];
         $pagingParams=$this->readDataParams($data);
 
         if(array_key_exists('userId', $data)){
@@ -178,6 +197,9 @@ class PaymentRepository implements PaymentRepositoryInterface
         }
         if(array_key_exists('paymentFor', $data)){
             array_push($conditions,["payment_details->paymentFor",'=', strtoupper($data['paymentFor'])]);
+        }
+        if(array_key_exists('amount_paid', $data)){
+            array_push($conditions,["payment_details->amount_paid",'=', $data['amount_paid']]);
         }
         if(array_key_exists('txnNo', $data)){
             array_push($conditions,["payment_details->txnNo",'=', $data['txnNo']]);

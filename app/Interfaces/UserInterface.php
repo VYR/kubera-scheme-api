@@ -37,4 +37,7 @@ interface UserInterface
     public function updateContactMessages(Request $request);
 
     public function deleteUser(Request $request);
+    public function getCompleteDetails(Request $request);
+
+
 }

@@ -10,6 +10,7 @@ use App\Models\ContactMessage;
 use App\Models\Payment;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail as FacadesMail;
 
 class UserRepository implements UserRepositoryInterface
@@ -46,22 +47,45 @@ class UserRepository implements UserRepositoryInterface
         $conditions = [];
         $directSearchKeys = ['email', 'created_at', 'updated_at'];
         $pagingParams = $this->readDataParams($data);
-        if (array_key_exists('website', $data)) {
-            array_push($conditions, ['user_details->signup_data->website', '=', $data['website']]);
-        }
         if (array_key_exists('role', $data)) {
             array_push($conditions, ['user_details->signup_data->role', '=', strtoupper($data['role'])]);
         }
-        $query = new User;
-        if (count($conditions) > 0) {
-            $query = $query->where($conditions);
+        $query = new User();
+        if (array_key_exists('search', $data)) {
+            $data['search']=strtolower($data['search']);
+            $query=$query->where('email', 'LIKE', '%'.$data['search'].'%');
+            //$query->orWhere
+            $query= $query->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.name")) LIKE ?',  ['%'.$data['search'].'%'])
+            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.email")) LIKE ?',  ['%'.$data['search'].'%'])
+            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.phoneNumber")) LIKE ?',  ['%'.$data['search'].'%'])
+            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.countryCode")) LIKE ?',  ['%'.$data['search'].'%'])
+            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.pan")) LIKE ?',  ['%'.$data['search'].'%'])
+            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.aadhar")) LIKE ?',  ['%'.$data['search'].'%']);
+            if (array_key_exists('role', $data)) {
+                $query=$query->where('user_details->signup_data->role', '=', strtoupper($data['role']));
+            }
+           // ->orWhereRaw('LOWER(user_details->signup_data->email) LIKE ?',  ['%'.$data['search'].'%'])
+           // ->orWhereRaw('LOWER(user_details->signup_data->phoneNumber) LIKE ?',  ['%'.$data['search'].'%'])
+           // ->orWhereRaw('LOWER(user_details->signup_data->countryCode) LIKE ?',  ['%'.$data['search'].'%']);
+        }
+        else if (count($conditions)>0) {
+            $query=$query->where($conditions);
         }
         if (in_array($pagingParams[config('app-constants.pagingKeys.sortKey')], $directSearchKeys)) {
-            $query = $query->orderBy($pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
+            $query->orderBy($pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         } else {
-            $query = $query->orderBy('user_details->signup_data->'.$pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
+            $query->orderBy('user_details->signup_data->'.$pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         }
+        DB::listen(function($query){
+            $this->logMe(message: 'end getEntireTableData()', data: [
+                'file' => __FILE__,
+                'line' => __LINE__,
+                'query'=> '[' . date('Y-m-d H:i:s') . ']' . PHP_EOL . $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL . PHP_EOL
+            ]);
 
+           //torage::append('logs/query.log', '[' . date('Y-m-d H:i:s') . ']' . PHP_EOL . $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL . PHP_EOL);
+            }
+            );
         //$query =$query->orderByRaw('CAST(JSON_EXTRACT(user_details, "$.signup_data.'.$pagingParams[config('app-constants.pagingKeys.sortKey')].'") AS '.$pagingParams[config('app-constants.pagingKeys.sortKey')].')',$pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         return $query->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
             ['*'], 'users', $pagingParams[config('app-constants.pagingKeys.pageIndex')]);
@@ -75,7 +99,9 @@ class UserRepository implements UserRepositoryInterface
 
     }
 
-    public function findById($id) {}
+    public function findById($id) {
+        return User::where('email','=',$id)->first();
+    }
 
     public function findByEmail($email) {}
 
@@ -94,7 +120,6 @@ class UserRepository implements UserRepositoryInterface
             if (array_key_exists('email', $data['user_details']['signup_data'])) {
                 $conditions = [
                     ['user_details->signup_data->email', '=', $data['user_details']['signup_data']['email']],
-                    ['user_details->signup_data->website', '=', $data['user_details']['signup_data']['website']],
                 ];
                 $response = User::where($conditions)->first();
                 if (! is_null($response)) {
@@ -103,17 +128,26 @@ class UserRepository implements UserRepositoryInterface
                     return $resp;
                 }
             }
-            if (array_key_exists('phoneNumber', $data['user_details']['signup_data'])) {
+            else {
+                $resp['data'] = 'Email Required';
+                return $resp;
+            }
+            if (array_key_exists('phoneNumber', $data['user_details']['signup_data']) &&
+                array_key_exists('countryCode', $data['user_details']['signup_data'])
+                ) {
                 $conditions = [
                     ['user_details->signup_data->phoneNumber', '=', $data['user_details']['signup_data']['phoneNumber']],
-                    ['user_details->signup_data->website', '=', $data['user_details']['signup_data']['website']],
+                    ['user_details->signup_data->countryCode', '=', $data['user_details']['signup_data']['countryCode']],
                 ];
                 $response = User::where($conditions)->first();
                 if (! is_null($response)) {
-                    $resp['data'] = 'Phone Number ALready Existed';
-
+                    $resp['data'] = 'Phone Number with same country code ALready Existed';
                     return $resp;
                 }
+            }
+            else {
+                $resp['data'] = 'Phone Number and Country Code are mandatory';
+                return $resp;
             }
 
             $user = new User;
@@ -121,6 +155,7 @@ class UserRepository implements UserRepositoryInterface
             $user->user_details = $data['user_details'];
             $user->user_history = $data['user_details'];
             $resp['status'] = $user->save();
+            if($data['role']==='SCHEME_MEMBER')
             $this->sendSignupMessage($data);
 
             return $resp;
@@ -153,12 +188,10 @@ class UserRepository implements UserRepositoryInterface
             $conditions1 = [
                 ['user_details->signup_data->email', '=', $data['email']],
                 ['user_details->signup_data->password', '=', $data['password']],
-                ['user_details->signup_data->website', '=', $data['website']],
             ];
             $conditions2 = [
                 ['user_details->signup_data->phoneNumber', '=', $data['email']],
                 ['user_details->signup_data->password', '=', $data['password']],
-                ['user_details->signup_data->website', '=', $data['website']],
             ];
             $response = User::where($conditions1)->orWhere($conditions2)->first();
             if (is_null($response)) {
@@ -323,7 +356,7 @@ class UserRepository implements UserRepositoryInterface
         try {
             $conditions = [
                 ['user_details->signup_data->phoneNumber', '=', $data['mobile']],
-                ['user_details->signup_data->website', '=', $data['website']],
+                ['user_details->signup_data->countryCode', '=', $data['code']],
             ];
             $response = User::where($conditions)->first();
             $existingRecord = [];
@@ -760,5 +793,62 @@ class UserRepository implements UserRepositoryInterface
             $this->logMe(message: 'start deleteUser()', data: ['file' => __FILE__, 'line' => __LINE__]);
             throw new GlobalException(errCode: 404, data: $data, errMsg: $e->getMessage());
         }
+    }
+
+
+    public function getCommonData(array $data)
+    {
+        $this->logMe(message: 'start getCommonData()', data: ['file' => __FILE__, 'line' => __LINE__]);
+        $response='';
+        try {
+            switch ($data['type']) {
+                case 'getPaymentsByUserId':
+                    $response=$this->getPaymentsByUserId($data);
+                    break;
+                case 'getReferralsByUserId':
+                    $response=$this->getTotalAmountByUserId($data);
+                    break;
+            }
+            return $response;
+        } catch (\Exception $e) {
+            $this->logMe(message: 'Exception getCommonData()', data: ['file' => __FILE__, 'line' => __LINE__]);
+            throw new GlobalException(errCode: 404, data: $data, errMsg: $e->getMessage());
+        }
+    }
+    function getPaymentsByUserId($data){
+        return Payment::where([
+            ['userId','=',$data['userId']],
+            ["payment_details->paymentFor",'=', strtoupper($data['paymentFor'])]
+            ])->get();
+    }
+    function getReferralsByUserId($data){
+        return User::select('email')->where([
+            ["user_details->signup_data->referralCode",'=', $data['userId']]
+            ])->get();
+    }
+    function getReferralPaymentsByUserId($data){
+        return Payment::select(
+            'userId',
+            DB::raw('json_extract(payment_details, "$.amount_paid") as amount'),
+            DB::raw('json_extract(payment_details, "$.paymentFor") as paidFor')
+        )->whereIn('userId', User::select('email')->where([
+            ["user_details->signup_data->referralCode",'=', $data['userId']]
+            ]))->get();
+    }
+    function getReferralAmountsByUserId($data){
+        return Payment::select(
+            'userId',
+            DB::raw('json_extract(payment_details, "$.amount_paid") as amount'),
+            DB::raw('json_extract(payment_details, "$.paymentFor") as paidFor')
+        )->whereIn('userId', User::select('email')->where([
+            ["user_details->signup_data->referralCode",'=', $data['userId']]
+            ]))->get();
+    }
+    function getTotalAmountByUserId($data){
+        return Payment::select(
+            DB::raw('SUM(json_extract(payment_details, "$.amount_paid")) as amount')
+        )->whereIn('userId', User::select('email')->where([
+            ["user_details->signup_data->referralCode",'=', $data['userId']]
+            ]))->get();
     }
 }

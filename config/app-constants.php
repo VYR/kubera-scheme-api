@@ -73,6 +73,10 @@ return [
     'PAYMENT' => [
         'GOLD_GST' => 3,
         'GOLD_MAKING_CHARGES' => 3,
-        'TDS_ON_INTREST' => 10
+        'TDS_ON_INTREST' => 10,
+        'TYPES' => [
+            'KUBERA' => 'KUBERA_SCHEME',
+            'DIGITAL' => 'DIGITAL_GOLD'
+        ]
     ]
 ];

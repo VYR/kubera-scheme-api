@@ -26,6 +26,8 @@ Route::group([
         Route::post('/add-contact-messages', [UserController::class, 'addContactMessages']);
         Route::post('/update-settings', [UserController::class, 'updateSettings']);
         Route::get('/get-settings', [UserController::class, 'getSettings']);
+        Route::post('/get-complete-details', [UserController::class, 'getCompleteDetails']);
+
 
     });
 

@@ -41,4 +41,5 @@ interface UserRepositoryInterface
     public function updateSettings(array $data);
 
     public function getSettings(array $data);
+    public function getCommonData(array $data);
 }

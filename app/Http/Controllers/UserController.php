@@ -94,4 +94,10 @@ class UserController extends Controller
 
         return $this->userInterface->deleteUser($request);
     }
+    public function getCompleteDetails(Request $request)
+    {
+        $this->logMe(message: 'getCompleteDetails()', data: ['file' => __FILE__, 'line' => __LINE__]);
+
+        return $this->userInterface->getCompleteDetails($request);
+    }
 }

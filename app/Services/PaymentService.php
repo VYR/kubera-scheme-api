@@ -7,6 +7,7 @@ use App\GlobalLogger;
 use App\GlobalResponseData;
 use App\RepositoryInterfaces\PaymentRepositoryInterface;
 use App\ServiceInterfaces\PaymentInterface;
+use DateTime;
 use Illuminate\Http\Request;
 
 class PaymentService implements PaymentInterface
@@ -32,6 +33,7 @@ class PaymentService implements PaymentInterface
             $dbStatus=$this->paymentRepository->updatePaymentDetails($data);
             if($dbStatus['status']){
                 $response['statusCode']=200;
+                $response['data']=[$data,$dbStatus['data']];
                 $response['msg']= $dbStatus['msg'];
             }
             else {
@@ -145,10 +147,13 @@ class PaymentService implements PaymentInterface
             $data['no_paging']=true;
             $rec= $this->paymentRepository->getAllPayments($data);
             $calculations=[];
-            if(count($rec)>0)
+            if(count($rec))
             {
                 $dbRec=$rec[0]->payment_details;
                 $dbDate=$rec[0]->created_at;
+                $payment_id=$rec[0]->id;
+                $paymentDate=$rec[0]->created_at;
+                $startDate=date("Y-m-d H:i:s", strtotime("+30 days", strtotime($dbDate)));
                 $goldAPIData=$this->handleMicroServiceGetRequest('https://vibullion.com/get-gold-live-rate');
                 $goldRateINR=round(floatval(((array)$goldAPIData)["0"]->Ask)/10,2);
                 $markingPercent=config('app-constants.PAYMENT.GOLD_MAKING_CHARGES');
@@ -162,8 +167,22 @@ class PaymentService implements PaymentInterface
                 $tdsOnIntrest=config('app-constants.PAYMENT.TDS_ON_INTREST');
                 $tdsAmount=$intrestOnMonthlyPayout*($tdsOnIntrest/100);
                 $InvestmentInvoiceValue=$monthlyPayout-$tdsAmount;
+                $months=0;
+                for($i=1;$i<=45;$i++){
 
-                for($i=1;$i<=40;$i++){
+                        $date1 = new DateTime($paymentDate);
+                        ;
+                        $date2 = new DateTime(date("Y-m-05 h:i:s A", strtotime($dbDate)));
+
+                        $days  = $date2->diff($date1)->format('%a');
+
+                        if($days<30){
+                            $dbDate= date("Y-m-05 h:i:s A", strtotime("+30 days", strtotime($dbDate)));
+                            continue;
+                        }
+                        else
+                        $months++;
+
                     /**
                      *Excel part-1
                     */
@@ -185,7 +204,11 @@ class PaymentService implements PaymentInterface
                     $date=date('Y-m-d',strtotime($dbDate));
                     $row=[
                         'date' => $date,
-                        'month' => $i,
+                        'd' => $dbRec,
+                        'id' => $payment_id,
+                        'paymentDate' => $paymentDate,
+                        'startDate' => $startDate,
+                        'month' => $months,
                         'marketPrice' => round($marketPrice,2),
                         'mcxPrice' => $mcxPrice,
                         'makingCharges' => round($makingCharges,2),
@@ -199,8 +222,8 @@ class PaymentService implements PaymentInterface
                         'closingBal' => $closingBal,
                         'tdsAmount' => $tdsAmount,
                         'investmentInvoiceValue' => $InvestmentInvoiceValue,
-                        'noOfGrams' => $noOfGrams
-
+                        'noOfGrams' => $noOfGrams,
+                        'days' => $days
                     ];
                     array_push($calculations,$row);
                     /*closing will be opening for next month*/
@@ -209,8 +232,8 @@ class PaymentService implements PaymentInterface
                     $dt = strtotime($date);
                     // Add 1 month to the given date using strtotime() function
                     // and output the result in the format "Y-m-d"
-                    $dbDate= date("Y-m-d h:i:s A", strtotime("+1 month", $dt));
-                    //if($i===1) break;
+                    $dbDate= date("Y-m-05 h:i:s A", strtotime("+30 days", $dt));
+                    if($months===40) break;
                 }
                 $response['data']= $calculations;
             }

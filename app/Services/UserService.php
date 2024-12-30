@@ -646,4 +646,58 @@ class UserService implements UserInterface
             throw new GlobalException(errCode: 404, data: $data, errMsg: $e->getMessage());
         }
     }
+    // private function
+    public function getCompleteDetails(Request $request)
+    {
+        $this->logMe(message: 'start getCompleteDetails()', data: ['file' => __FILE__, 'line' => __LINE__]);
+        /* Create response data */
+        $response = [
+            'data' => [],
+            'statusCode' => 200,
+        ];
+        $data = $request->all();
+
+        try {
+            $finalData=[
+                'user' => '',
+                'referrals' => [],
+                'schemes' => [
+                    'kubera' => [],
+                    'digitalGold' => []
+                ]
+            ];
+            if(in_array('requestType',$data)){
+                switch ($$data['requestType']) {
+                    case 'total':
+                        /*User details*/
+                        $finalData['user'] = $this->userRepository->findById($data['userId']);
+                        /*User payments*/
+                        $data['type']='getPaymentsByUserId';
+                        $data['paymentFor']=config('app-constants.PAYMENT.TYPES.KUBERA');
+                        $finalData['schemes']['kubera']=$this->userRepository->getCommonData($data);
+                        $data['paymentFor']=config('app-constants.PAYMENT.TYPES.DIGITAL');
+                        $finalData['schemes']['digitalGold']=$this->userRepository->getCommonData($data);
+                        /*User referrals*/
+                        $data['type']='getReferralsByUserId';
+                        $finalData['referrals']=$this->userRepository->getCommonData($data);
+                        break;
+                    case 'balance':
+
+                        break;
+                }
+            }
+
+
+
+            $response['data'] = $finalData;
+            $response['msg'] = config('app-constants.RESPONSE.MSG.GET_DATA_SUCCESSFUL');
+            $this->logMe(message: 'end getCompleteDetails()', data: ['file' => __FILE__, 'line' => __LINE__]);
+
+            /*send response data */
+            return $this->sendResponse($response['statusCode'], $response['msg'], $response['data'], '');
+        } catch (\Exception $e) {
+            $this->logMe(message: 'end getCompleteDetails() at Exception', data: ['file' => __FILE__, 'line' => __LINE__]);
+            throw new GlobalException(data: $response, errMsg: $e->getMessage());
+        }
+    }
 }
