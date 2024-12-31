@@ -25,6 +25,10 @@ class UserController extends Controller
         return $this->userInterface->signup($request);
     }
 
+    public function getAadharUrl(Request $request){
+        $this->logMe(message:'start getAadharUrl() Controller',data:['file' => __FILE__, 'line' => __LINE__]);
+        return $this->userInterface->getAadharUrl($request);
+    }
     public function login(Request $request)
     {
         $this->logMe(message: 'login()', data: ['file' => __FILE__, 'line' => __LINE__]);

@@ -76,7 +76,9 @@ return [
         'TDS_ON_INTREST' => 10,
         'TYPES' => [
             'KUBERA' => 'KUBERA_SCHEME',
-            'DIGITAL' => 'DIGITAL_GOLD'
+            'DIGITAL' => 'DIGITAL_GOLD',
+            'PAYOUT' => 'REFERRAL_PAYOUT',
+            'BALANCE' => 'BALANCE'
         ]
     ]
 ];

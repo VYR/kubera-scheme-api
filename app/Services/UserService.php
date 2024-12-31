@@ -666,8 +666,8 @@ class UserService implements UserInterface
                     'digitalGold' => []
                 ]
             ];
-            if(in_array('requestType',$data)){
-                switch ($$data['requestType']) {
+            if(array_key_exists('requestType',$data)){
+                switch ($data['requestType']) {
                     case 'total':
                         /*User details*/
                         $finalData['user'] = $this->userRepository->findById($data['userId']);
@@ -681,8 +681,20 @@ class UserService implements UserInterface
                         $data['type']='getReferralsByUserId';
                         $finalData['referrals']=$this->userRepository->getCommonData($data);
                         break;
-                    case 'balance':
-
+                    case 'uiReferrals':
+                        $data['type']='uiReferrals';
+                        $finalData=$this->userRepository->getCommonData($data);
+                        break;
+                    case 'uiBalance':
+                        $data['type']='uiBalance';
+                        $finalData=$this->userRepository->getCommonData($data);
+                        break;
+                    case 'user':
+                        $finalData=$this->userRepository->findById($data['userId']);
+                        break;
+                    case 'uiSchemes':
+                        $data['type']='uiSchemes';
+                        $finalData=$this->userRepository->getCommonData($data);
                         break;
                 }
             }

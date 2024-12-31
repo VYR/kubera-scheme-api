@@ -808,6 +808,16 @@ class UserRepository implements UserRepositoryInterface
                 case 'getReferralsByUserId':
                     $response=$this->getTotalAmountByUserId($data);
                     break;
+                case 'uiReferrals':
+                    $response=$this->getuiReferrals($data);
+                    break;
+                case 'uiBalance':
+                    $response=$this->getuiBalance($data);
+                    break;
+                case 'uiSchemes':
+                    $response=$this->getuiSchemes($data);
+                    break;
+
             }
             return $response;
         } catch (\Exception $e) {
@@ -851,4 +861,136 @@ class UserRepository implements UserRepositoryInterface
             ["user_details->signup_data->referralCode",'=', $data['userId']]
             ]))->get();
     }
+    function getuiReferrals($data){
+        $referredUsers=User::select(
+   'created_at',
+            'email as userId',
+            DB::raw('JSON_UNQUOTE(json_extract(user_details, "$.signup_data.name")) as name'),
+            DB::raw('JSON_UNQUOTE(json_extract(user_details, "$.signup_data.email")) as email'),
+            DB::raw('JSON_UNQUOTE(json_extract(user_details, "$.signup_data.phoneNumber")) as phoneNumber'),
+            DB::raw('JSON_UNQUOTE(json_extract(user_details, "$.signup_data.countryCode")) as countryCode')
+            )->where([
+            ["user_details->signup_data->referralCode",'=', $data['userId']]
+            ])->get();
+        $payments=Payment::select(
+            'userId',
+            DB::raw('json_extract(payment_details, "$.amount_paid") as amount'),
+            DB::raw('json_extract(payment_details, "$.paymentFor") as paidFor'))
+            ->whereIn('userId', User::select('email')->where([
+                ["user_details->signup_data->referralCode",'=', $data['userId']]]))
+            ->whereIn('payment_details->paymentFor',[
+                    config('app-constants.PAYMENT.TYPES.KUBERA'),
+                    config('app-constants.PAYMENT.TYPES.DIGITAL'),
+                ])->get();
+
+        $referralPayout=Payment::select(
+            DB::raw('SUM(json_extract(payment_details, "$.amount_paid")) as amount')
+            )
+            ->where('userId', '=', $data['userId'])
+            ->where('payment_details->paymentFor','=', config('app-constants.PAYMENT.TYPES.PAYOUT')
+                )->get();
+        $settings=Setting::first();
+        $referralAmount=0;
+        foreach ($payments as $value) {
+            $referralAmount=$referralAmount+intval($value['amount']);
+        }
+        $unpaidUsers=[];
+        $paidUsers=[];
+        $paidUserIds=[];
+        foreach ($payments as $value) {
+            array_push($paidUserIds,$value['userId']);
+        }
+        foreach ($referredUsers as $value) {
+            if(in_array($value['userId'], $paidUserIds))
+            array_push($paidUsers,$value);
+            else
+            array_push($unpaidUsers,$value);
+        }
+        $x= (count($referralPayout)>0)?$referralPayout[0]['amount']:0;
+        $eligibleAmount=0;
+        if($settings)
+        if($referralAmount>intval($settings->setting_details['referralPayout']['type1']['min'])
+        && $referralAmount<intval($settings->setting_details['referralPayout']['type1']['min'])
+        ){
+            $eligibleAmount=$referralAmount*($settings->setting_details['referralPayout']['type1']['rate']/100);
+        }
+        else{
+            $eligibleAmount=$referralAmount*($settings->setting_details['referralPayout']['type2']['rate']/100);
+        }
+        return [
+            'total' => count($referredUsers),
+            'paidUsers' => $paidUsers,
+            'unpaidUsers' => $unpaidUsers,
+            'payoutAmount' => (count($referralPayout)>0)?$referralPayout[0]['amount']:0,
+            'totalReferralAmount' => $referralAmount,
+            'eligibileAmount' => $eligibleAmount,
+            'settings' => $settings->setting_details['referralPayout'],
+
+        ];
+    }
+
+    function getuiBalance($data){
+        $spentMoney=Payment::select(
+            DB::raw('SUM(json_extract(payment_details, "$.amount_paid")) as amount')
+            )
+            ->where('userId', '=', $data['userId'])
+            ->whereIn('payment_details->paymentFor',[
+                    config('app-constants.PAYMENT.TYPES.KUBERA'),
+                    config('app-constants.PAYMENT.TYPES.DIGITAL'),
+                ])->get();
+
+        $addedMoney=Payment::select(
+            DB::raw('SUM(json_extract(payment_details, "$.amount_paid")) as amount')
+            )
+            ->where('userId', '=', $data['userId'])
+            ->where('payment_details->paymentFor','=', config('app-constants.PAYMENT.TYPES.BALANCE')
+                )->get();
+        $unpaidUsers=[];
+        $paidUsers=[];
+        $paidUserIds=[];
+
+        return [
+            'added' => (count($addedMoney)>0)?$addedMoney[0]['amount']:0,
+            'spent' => (count($spentMoney)>0)?$spentMoney[0]['amount']:0
+        ];
+    }
+
+    function getPayments($data,$type,$isComplete){
+        $query=Payment::where(
+            'userId', '=', $data['userId']
+            )
+            ->where('payment_details->paymentFor','=', $type);
+        if($isComplete==='YES')
+            $query=$query->where('payment_details->isCompleted','=', 'YES');
+        return $query->get();
+    }
+    function getuiSchemes($data){
+        return [
+            'kubera' => [
+                'completed' => $this->getPayments(
+                    $data,
+                    config('app-constants.PAYMENT.TYPES.KUBERA'),
+                    'YES'
+                ),
+                'inComplete' => $this->getPayments(
+                    $data,
+                    config('app-constants.PAYMENT.TYPES.KUBERA'),
+                    'NO'
+                ),
+            ],
+            'digital' => [
+                'completed' => $this->getPayments(
+                    $data,
+                    config('app-constants.PAYMENT.TYPES.DIGITAL'),
+                    'YES'
+                ),
+                'inComplete' => $this->getPayments(
+                    $data,
+                    config('app-constants.PAYMENT.TYPES.DIGITAL'),
+                    'NO'
+                ),
+            ]
+        ];
+    }
+
 }
