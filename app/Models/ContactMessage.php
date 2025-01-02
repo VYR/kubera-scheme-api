@@ -21,4 +21,11 @@ class ContactMessage extends Model
         'status',
         'contact_message_history',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'contact_message_history' => 'array'
+        ];
+    }
 }

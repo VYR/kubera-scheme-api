@@ -702,6 +702,7 @@ class UserRepository implements UserRepositoryInterface
             $obj->fill($data);
             $obj->employee_reply = 'Just received message';
             $obj->status = 'SUBMITTED';
+            $obj->contact_message_history=[$data];
             $this->logMe(message: 'end addContactMessages() Repository', data: ['file' => __FILE__, 'line' => __LINE__]);
 
             return $obj->save();

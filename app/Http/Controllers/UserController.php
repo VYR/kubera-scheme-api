@@ -29,6 +29,12 @@ class UserController extends Controller
         $this->logMe(message:'start getAadharUrl() Controller',data:['file' => __FILE__, 'line' => __LINE__]);
         return $this->userInterface->getAadharUrl($request);
     }
+
+
+    public function addContactMessages(Request $request){
+        $this->logMe(message:'start addContactMessages()',data:['file' => __FILE__, 'line' => __LINE__]);
+        return $this->userInterface->addContactMessages($request);
+    }
     public function login(Request $request)
     {
         $this->logMe(message: 'login()', data: ['file' => __FILE__, 'line' => __LINE__]);
