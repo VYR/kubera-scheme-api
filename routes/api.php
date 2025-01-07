@@ -28,7 +28,6 @@ Route::group([
         Route::get('/get-settings', [UserController::class, 'getSettings']);
         Route::post('/get-complete-details', [UserController::class, 'getCompleteDetails']);
 
-
     });
 
     /**Payment routes */
@@ -50,9 +49,7 @@ Route::group([
     });
     /**Admin routes */
     Route::group(['prefix' => 'admin'], function () {
-
         Route::get('/total-users', [UserController::class, 'totalUsers']);
-
         Route::get('/get-contact-messages', [UserController::class, 'totalUsers']);
         Route::get('/update-contact-messages', [UserController::class, 'updateContactMessages']);
 
