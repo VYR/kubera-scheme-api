@@ -15,12 +15,14 @@ class Payment extends Model
     protected $fillable = [
         'payment_details',
         'userId',
+        'payment_history',
     ];
 
     protected function casts(): array
     {
         return [
             'payment_details' => 'array',
+            'payment_history' => 'array',
         ];
     }
 }
