@@ -5,27 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Notifications\Notifiable;
 
-class ContactMessage extends Model
+
+class Setting extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
     use SoftDeletes;
 
+
     protected $fillable = [
-        'name',
-        'email',
-        'phone',
-        'message',
-        'employee_reply',
-        'status',
-        'contact_message_history',
+        'setting_details',
+        'setting_name',
     ];
 
     protected function casts(): array
     {
         return [
-            'contact_message_history' => 'array'
+            'setting_details' => 'array',
         ];
     }
 }
