@@ -50,42 +50,42 @@ class UserRepository implements UserRepositoryInterface
         if (array_key_exists('role', $data)) {
             array_push($conditions, ['user_details->signup_data->role', '=', strtoupper($data['role'])]);
         }
-        $query = new User();
+        $query = new User;
         if (array_key_exists('search', $data)) {
-            $data['search']=strtolower($data['search']);
-            $query=$query->where('email', 'LIKE', '%'.$data['search'].'%');
+            $data['search'] = strtolower($data['search']);
+            $query = $query->where('email', 'LIKE', '%'.$data['search'].'%');
             //$query->orWhere
-            $query= $query->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.name")) LIKE ?',  ['%'.$data['search'].'%'])
-            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.email")) LIKE ?',  ['%'.$data['search'].'%'])
-            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.phoneNumber")) LIKE ?',  ['%'.$data['search'].'%'])
-            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.countryCode")) LIKE ?',  ['%'.$data['search'].'%'])
-            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.pan")) LIKE ?',  ['%'.$data['search'].'%'])
-            ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.aadhar")) LIKE ?',  ['%'.$data['search'].'%']);
+            $query = $query->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.name")) LIKE ?', ['%'.$data['search'].'%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.email")) LIKE ?', ['%'.$data['search'].'%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.phoneNumber")) LIKE ?', ['%'.$data['search'].'%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.countryCode")) LIKE ?', ['%'.$data['search'].'%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.pan")) LIKE ?', ['%'.$data['search'].'%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.aadhar")) LIKE ?', ['%'.$data['search'].'%']);
             if (array_key_exists('role', $data)) {
-                $query=$query->where('user_details->signup_data->role', '=', strtoupper($data['role']));
+                $query = $query->where('user_details->signup_data->role', '=', strtoupper($data['role']));
             }
-           // ->orWhereRaw('LOWER(user_details->signup_data->email) LIKE ?',  ['%'.$data['search'].'%'])
-           // ->orWhereRaw('LOWER(user_details->signup_data->phoneNumber) LIKE ?',  ['%'.$data['search'].'%'])
-           // ->orWhereRaw('LOWER(user_details->signup_data->countryCode) LIKE ?',  ['%'.$data['search'].'%']);
-        }
-        else if (count($conditions)>0) {
-            $query=$query->where($conditions);
+            // ->orWhereRaw('LOWER(user_details->signup_data->email) LIKE ?',  ['%'.$data['search'].'%'])
+            // ->orWhereRaw('LOWER(user_details->signup_data->phoneNumber) LIKE ?',  ['%'.$data['search'].'%'])
+            // ->orWhereRaw('LOWER(user_details->signup_data->countryCode) LIKE ?',  ['%'.$data['search'].'%']);
+        } elseif (count($conditions) > 0) {
+            $query = $query->where($conditions);
         }
         if (in_array($pagingParams[config('app-constants.pagingKeys.sortKey')], $directSearchKeys)) {
             $query->orderBy($pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         } else {
             $query->orderBy('user_details->signup_data->'.$pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         }
-        DB::listen(function($query){
+        DB::listen(function ($query) {
             $this->logMe(message: 'end getEntireTableData()', data: [
                 'file' => __FILE__,
                 'line' => __LINE__,
-                'query'=> '[' . date('Y-m-d H:i:s') . ']' . PHP_EOL . $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL . PHP_EOL
+                'query' => '['.date('Y-m-d H:i:s').']'.PHP_EOL.$query->sql.' ['.implode(', ', $query->bindings).']'.PHP_EOL.PHP_EOL,
             ]);
 
-           //torage::append('logs/query.log', '[' . date('Y-m-d H:i:s') . ']' . PHP_EOL . $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL . PHP_EOL);
-            }
-            );
+            //torage::append('logs/query.log', '[' . date('Y-m-d H:i:s') . ']' . PHP_EOL . $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL . PHP_EOL);
+        }
+        );
+
         //$query =$query->orderByRaw('CAST(JSON_EXTRACT(user_details, "$.signup_data.'.$pagingParams[config('app-constants.pagingKeys.sortKey')].'") AS '.$pagingParams[config('app-constants.pagingKeys.sortKey')].')',$pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         return $query->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
             ['*'], 'users', $pagingParams[config('app-constants.pagingKeys.pageIndex')]);
@@ -99,8 +99,9 @@ class UserRepository implements UserRepositoryInterface
 
     }
 
-    public function findById($id) {
-        return User::where('email','=',$id)->first();
+    public function findById($id)
+    {
+        return User::where('email', '=', $id)->first();
     }
 
     public function findByEmail($email) {}
@@ -127,14 +128,14 @@ class UserRepository implements UserRepositoryInterface
 
                     return $resp;
                 }
-            }
-            else {
+            } else {
                 $resp['data'] = 'Email Required';
+
                 return $resp;
             }
             if (array_key_exists('phoneNumber', $data['user_details']['signup_data']) &&
                 array_key_exists('countryCode', $data['user_details']['signup_data'])
-                ) {
+            ) {
                 $conditions = [
                     ['user_details->signup_data->phoneNumber', '=', $data['user_details']['signup_data']['phoneNumber']],
                     ['user_details->signup_data->countryCode', '=', $data['user_details']['signup_data']['countryCode']],
@@ -142,11 +143,12 @@ class UserRepository implements UserRepositoryInterface
                 $response = User::where($conditions)->first();
                 if (! is_null($response)) {
                     $resp['data'] = 'Phone Number with same country code ALready Existed';
+
                     return $resp;
                 }
-            }
-            else {
+            } else {
                 $resp['data'] = 'Phone Number and Country Code are mandatory';
+
                 return $resp;
             }
 
@@ -155,8 +157,9 @@ class UserRepository implements UserRepositoryInterface
             $user->user_details = $data['user_details'];
             $user->user_history = $data['user_details'];
             $resp['status'] = $user->save();
-            if($data['role']==='SCHEME_MEMBER')
-            $this->sendSignupMessage($data);
+            if ($data['role'] === 'SCHEME_MEMBER') {
+                // $this->sendSignupMessage($data);
+            }
 
             return $resp;
 
@@ -702,7 +705,7 @@ class UserRepository implements UserRepositoryInterface
             $obj->fill($data);
             $obj->employee_reply = 'Just received message';
             $obj->status = 'SUBMITTED';
-            $obj->contact_message_history=[$data];
+            $obj->contact_message_history = [$data];
             $this->logMe(message: 'end addContactMessages() Repository', data: ['file' => __FILE__, 'line' => __LINE__]);
 
             return $obj->save();
@@ -796,133 +799,147 @@ class UserRepository implements UserRepositoryInterface
         }
     }
 
-
     public function getCommonData(array $data)
     {
         $this->logMe(message: 'start getCommonData()', data: ['file' => __FILE__, 'line' => __LINE__]);
-        $response='';
+        $response = '';
         try {
             switch ($data['type']) {
                 case 'getPaymentsByUserId':
-                    $response=$this->getPaymentsByUserId($data);
+                    $response = $this->getPaymentsByUserId($data);
                     break;
                 case 'getReferralsByUserId':
-                    $response=$this->getTotalAmountByUserId($data);
+                    $response = $this->getTotalAmountByUserId($data);
                     break;
                 case 'uiReferrals':
-                    $response=$this->getuiReferrals($data);
+                    $response = $this->getuiReferrals($data);
                     break;
                 case 'uiBalance':
-                    $response=$this->getuiBalance($data);
+                    $response = $this->getuiBalance($data);
                     break;
                 case 'uiSchemes':
-                    $response=$this->getuiSchemes($data);
+                    $response = $this->getuiSchemes($data);
                     break;
 
             }
+
             return $response;
         } catch (\Exception $e) {
             $this->logMe(message: 'Exception getCommonData()', data: ['file' => __FILE__, 'line' => __LINE__]);
             throw new GlobalException(errCode: 404, data: $data, errMsg: $e->getMessage());
         }
     }
-    function getPaymentsByUserId($data){
+
+    public function getPaymentsByUserId($data)
+    {
         return Payment::where([
-            ['userId','=',$data['userId']],
-            ["payment_details->paymentFor",'=', strtoupper($data['paymentFor'])]
-            ])->get();
+            ['userId', '=', $data['userId']],
+            ['payment_details->paymentFor', '=', strtoupper($data['paymentFor'])],
+        ])->get();
     }
-    function getReferralsByUserId($data){
+
+    public function getReferralsByUserId($data)
+    {
         return User::select('email')->where([
-            ["user_details->signup_data->referralCode",'=', $data['userId']]
-            ])->get();
+            ['user_details->signup_data->referralCode', '=', $data['userId']],
+        ])->get();
     }
-    function getReferralPaymentsByUserId($data){
+
+    public function getReferralPaymentsByUserId($data)
+    {
         return Payment::select(
             'userId',
             DB::raw('json_extract(payment_details, "$.amount_paid") as amount'),
             DB::raw('json_extract(payment_details, "$.paymentFor") as paidFor')
         )->whereIn('userId', User::select('email')->where([
-            ["user_details->signup_data->referralCode",'=', $data['userId']]
-            ]))->get();
+            ['user_details->signup_data->referralCode', '=', $data['userId']],
+        ]))->get();
     }
-    function getReferralAmountsByUserId($data){
+
+    public function getReferralAmountsByUserId($data)
+    {
         return Payment::select(
             'userId',
             DB::raw('json_extract(payment_details, "$.amount_paid") as amount'),
             DB::raw('json_extract(payment_details, "$.paymentFor") as paidFor')
         )->whereIn('userId', User::select('email')->where([
-            ["user_details->signup_data->referralCode",'=', $data['userId']]
-            ]))->get();
+            ['user_details->signup_data->referralCode', '=', $data['userId']],
+        ]))->get();
     }
-    function getTotalAmountByUserId($data){
+
+    public function getTotalAmountByUserId($data)
+    {
         return Payment::select(
             DB::raw('SUM(json_extract(payment_details, "$.amount_paid")) as amount')
         )->whereIn('userId', User::select('email')->where([
-            ["user_details->signup_data->referralCode",'=', $data['userId']]
-            ]))->get();
+            ['user_details->signup_data->referralCode', '=', $data['userId']],
+        ]))->get();
     }
-    function getuiReferrals($data){
-        $referredUsers=User::select(
-   'created_at',
+
+    public function getuiReferrals($data)
+    {
+        $referredUsers = User::select(
+            'created_at',
             'email as userId',
             DB::raw('JSON_UNQUOTE(json_extract(user_details, "$.signup_data.name")) as name'),
             DB::raw('JSON_UNQUOTE(json_extract(user_details, "$.signup_data.email")) as email'),
             DB::raw('JSON_UNQUOTE(json_extract(user_details, "$.signup_data.phoneNumber")) as phoneNumber'),
             DB::raw('JSON_UNQUOTE(json_extract(user_details, "$.signup_data.countryCode")) as countryCode')
-            )->where([
-            ["user_details->signup_data->referralCode",'=', $data['userId']]
-            ])->get();
-        $payments=Payment::select(
+        )->where([
+            ['user_details->signup_data->referralCode', '=', $data['userId']],
+        ])->get();
+        $payments = Payment::select(
             'userId',
             DB::raw('json_extract(payment_details, "$.amount_paid") as amount'),
             DB::raw('json_extract(payment_details, "$.paymentFor") as paidFor'))
             ->whereIn('userId', User::select('email')->where([
-                ["user_details->signup_data->referralCode",'=', $data['userId']]]))
-            ->whereIn('payment_details->paymentFor',[
-                    config('app-constants.PAYMENT.TYPES.KUBERA'),
-                    config('app-constants.PAYMENT.TYPES.DIGITAL'),
-                ])->get();
+                ['user_details->signup_data->referralCode', '=', $data['userId']]]))
+            ->whereIn('payment_details->paymentFor', [
+                config('app-constants.PAYMENT.TYPES.KUBERA'),
+                config('app-constants.PAYMENT.TYPES.DIGITAL'),
+            ])->get();
 
-        $referralPayout=Payment::select(
+        $referralPayout = Payment::select(
             DB::raw('SUM(json_extract(payment_details, "$.amount_paid")) as amount')
-            )
+        )
             ->where('userId', '=', $data['userId'])
-            ->where('payment_details->paymentFor','=', config('app-constants.PAYMENT.TYPES.PAYOUT')
-                )->get();
-        $settings=Setting::first();
-        $referralAmount=0;
+            ->where('payment_details->paymentFor', '=', config('app-constants.PAYMENT.TYPES.PAYOUT')
+            )->get();
+        $settings = Setting::first();
+        $referralAmount = 0;
         foreach ($payments as $value) {
-            $referralAmount=$referralAmount+intval($value['amount']);
+            $referralAmount = $referralAmount + intval($value['amount']);
         }
-        $unpaidUsers=[];
-        $paidUsers=[];
-        $paidUserIds=[];
+        $unpaidUsers = [];
+        $paidUsers = [];
+        $paidUserIds = [];
         foreach ($payments as $value) {
-            array_push($paidUserIds,$value['userId']);
+            array_push($paidUserIds, $value['userId']);
         }
         foreach ($referredUsers as $value) {
-            if(in_array($value['userId'], $paidUserIds))
-            array_push($paidUsers,$value);
-            else
-            array_push($unpaidUsers,$value);
+            if (in_array($value['userId'], $paidUserIds)) {
+                array_push($paidUsers, $value);
+            } else {
+                array_push($unpaidUsers, $value);
+            }
         }
-        $x= (count($referralPayout)>0)?$referralPayout[0]['amount']:0;
-        $eligibleAmount=0;
-        if($settings)
-        if($referralAmount>intval($settings->setting_details['referralPayout']['type1']['min'])
-        && $referralAmount<intval($settings->setting_details['referralPayout']['type1']['min'])
-        ){
-            $eligibleAmount=$referralAmount*($settings->setting_details['referralPayout']['type1']['rate']/100);
+        $x = (count($referralPayout) > 0) ? $referralPayout[0]['amount'] : 0;
+        $eligibleAmount = 0;
+        if ($settings) {
+            if ($referralAmount > intval($settings->setting_details['referralPayout']['type1']['min'])
+            && $referralAmount < intval($settings->setting_details['referralPayout']['type1']['min'])
+            ) {
+                $eligibleAmount = $referralAmount * ($settings->setting_details['referralPayout']['type1']['rate'] / 100);
+            } else {
+                $eligibleAmount = $referralAmount * ($settings->setting_details['referralPayout']['type2']['rate'] / 100);
+            }
         }
-        else{
-            $eligibleAmount=$referralAmount*($settings->setting_details['referralPayout']['type2']['rate']/100);
-        }
+
         return [
             'total' => count($referredUsers),
             'paidUsers' => $paidUsers,
             'unpaidUsers' => $unpaidUsers,
-            'payoutAmount' => (count($referralPayout)>0)?$referralPayout[0]['amount']:0,
+            'payoutAmount' => (count($referralPayout) > 0) ? $referralPayout[0]['amount'] : 0,
             'totalReferralAmount' => $referralAmount,
             'eligibileAmount' => $eligibleAmount,
             'settings' => $settings->setting_details['referralPayout'],
@@ -930,42 +947,48 @@ class UserRepository implements UserRepositoryInterface
         ];
     }
 
-    function getuiBalance($data){
-        $spentMoney=Payment::select(
+    public function getuiBalance($data)
+    {
+        $spentMoney = Payment::select(
             DB::raw('SUM(json_extract(payment_details, "$.amount_paid")) as amount')
-            )
+        )
             ->where('userId', '=', $data['userId'])
-            ->whereIn('payment_details->paymentFor',[
-                    config('app-constants.PAYMENT.TYPES.KUBERA'),
-                    config('app-constants.PAYMENT.TYPES.DIGITAL'),
-                ])->get();
+            ->whereIn('payment_details->paymentFor', [
+                config('app-constants.PAYMENT.TYPES.KUBERA'),
+                config('app-constants.PAYMENT.TYPES.DIGITAL'),
+            ])->get();
 
-        $addedMoney=Payment::select(
+        $addedMoney = Payment::select(
             DB::raw('SUM(json_extract(payment_details, "$.amount_paid")) as amount')
-            )
+        )
             ->where('userId', '=', $data['userId'])
-            ->where('payment_details->paymentFor','=', config('app-constants.PAYMENT.TYPES.BALANCE')
-                )->get();
-        $unpaidUsers=[];
-        $paidUsers=[];
-        $paidUserIds=[];
+            ->where('payment_details->paymentFor', '=', config('app-constants.PAYMENT.TYPES.BALANCE')
+            )->get();
+        $unpaidUsers = [];
+        $paidUsers = [];
+        $paidUserIds = [];
 
         return [
-            'added' => (count($addedMoney)>0)?$addedMoney[0]['amount']:0,
-            'spent' => (count($spentMoney)>0)?$spentMoney[0]['amount']:0
+            'added' => (count($addedMoney) > 0) ? $addedMoney[0]['amount'] : 0,
+            'spent' => (count($spentMoney) > 0) ? $spentMoney[0]['amount'] : 0,
         ];
     }
 
-    function getPayments($data,$type,$isComplete){
-        $query=Payment::where(
+    public function getPayments($data, $type, $isComplete)
+    {
+        $query = Payment::where(
             'userId', '=', $data['userId']
-            )
-            ->where('payment_details->paymentFor','=', $type);
-        if($isComplete==='YES')
-            $query=$query->where('payment_details->isCompleted','=', 'YES');
+        )
+            ->where('payment_details->paymentFor', '=', $type);
+        if ($isComplete === 'YES') {
+            $query = $query->where('payment_details->isCompleted', '=', 'YES');
+        }
+
         return $query->get();
     }
-    function getuiSchemes($data){
+
+    public function getuiSchemes($data)
+    {
         return [
             'kubera' => [
                 'completed' => $this->getPayments(
@@ -990,8 +1013,7 @@ class UserRepository implements UserRepositoryInterface
                     config('app-constants.PAYMENT.TYPES.DIGITAL'),
                     'NO'
                 ),
-            ]
+            ],
         ];
     }
-
 }
