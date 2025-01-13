@@ -29,6 +29,10 @@ class PaymentController extends Controller
         $this->logMe(message:'getAllPayments()',data:['file' => __FILE__, 'line' => __LINE__]);
         return $this->paymentInterface->getAllPayments($request);
     }
+    public function getKuberaCalculation(Request $request){
+        $this->logMe(message:'getKuberaCalculation()',data:['file' => __FILE__, 'line' => __LINE__]);
+        return $this->paymentInterface->getKuberaCalculation($request);
+    }
 
 
 }
