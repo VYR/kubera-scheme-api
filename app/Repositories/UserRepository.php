@@ -157,7 +157,7 @@ class UserRepository implements UserRepositoryInterface
             $user->user_details = $data['user_details'];
             $user->user_history = $data['user_details'];
             $resp['status'] = $user->save();
-            if ($data['role'] === 'SCHEME_MEMBER') {
+            if ($data['user_details']['signup_data']['role'] === 'SCHEME_MEMBER') {
                 // $this->sendSignupMessage($data);
             }
 
