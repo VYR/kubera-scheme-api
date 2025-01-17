@@ -16,6 +16,7 @@ class Payment extends Model
         'payment_details',
         'userId',
         'payment_history',
+        'delivery_details'
     ];
 
     protected function casts(): array
@@ -23,6 +24,7 @@ class Payment extends Model
         return [
             'payment_details' => 'array',
             'payment_history' => 'array',
+            'delivery_details' => 'array',
         ];
     }
 }
