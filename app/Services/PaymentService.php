@@ -211,7 +211,7 @@ class PaymentService implements PaymentInterface
                     $date = date('Y-m-d', strtotime($dbDate));
                     $row = [
                         'date' => $date,
-                        'd' => $dbRec,
+                        // 'd' => $dbRec,
                         'id' => $payment_id,
                         'paymentDate' => $paymentDate,
                         'startDate' => $startDate,
