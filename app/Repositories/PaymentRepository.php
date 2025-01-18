@@ -60,32 +60,43 @@ class PaymentRepository implements PaymentRepositoryInterface
                 ];
             } else {
                 $existingRecord = $response->toArray();
-                foreach ($data as $key => $value) {
-                    if (array_key_exists($key, $existingRecord['payment_details'])) {
+                if (array_key_exists('payment_details', $data)) {
+                    $data['payment_details'] = (array) $data['payment_details'];
+                    foreach ($data['payment_details'] as $key => $value) {
 
-                        if ($key === 'delivery_details' && array_key_exists('delivery_details', $existingRecord['payment_details'])) {
-                            if (! in_array($value['month'], array_column($existingRecord['payment_details']['delivery_details'], 'month'))) {
-                                array_push($existingRecord['payment_details']['delivery_details'], $value);
-                            } else {
-                                foreach ($existingRecord['payment_details']['delivery_details'] as $k => $v) {
-                                    if ($value['month'] === $v['month']) {
-                                        $existingRecord['payment_details']['delivery_details'][$k] = $value;
+                        $existingRecord['payment_details'][$key] = $value;
+
+                    }
+                    $response->payment_details = $existingRecord['payment_details'];
+                }
+                if (array_key_exists('delivery_details', $data)) {
+                    $data['delivery_details'] = (array) $data['delivery_details'];
+                    foreach ($data['delivery_details'] as $key => $value) {
+                        // this finds month key
+                        if (array_key_exists($key, $existingRecord['delivery_details'])) {
+                            // this finds delivery_status in month
+                            if (is_object($data['delivery_details'][$key])) {
+                                $data['delivery_details'][$key] = (array) $data['delivery_details'][$key];
+                            }
+                            if (array_key_exists('delivery_status', $existingRecord['delivery_details'][$key])) {
+                                // $messages = $existingRecord['delivery_details'][$key]['delivery_status'];
+                                if (array_key_exists('delete', $data)) {
+                                    $existingRecord['delivery_details'][$key]['delivery_status'] = $data['delivery_details'][$key]['delivery_status'];
+                                } else {
+                                    foreach ($data['delivery_details'][$key]['delivery_status'] as $value) {
+                                        array_push($existingRecord['delivery_details'][$key]['delivery_status'], $value);
+
                                     }
                                 }
+
                             }
-                            //$existingRecord['payment_details']['delivery_details']=[];
                         } else {
-                            $existingRecord['payment_details'][$key] = $value;
+                            $existingRecord['delivery_details'][$key] = $value;
                         }
-                    } else {
-                        if ($key === 'delivery_details') {
-                            $existingRecord['payment_details'][$key] = [$value];
-                        } else {
-                            $existingRecord['payment_details'][$key] = $value;
-                        }
+
                     }
+                    $response->delivery_details = $existingRecord['delivery_details'];
                 }
-                $response->payment_details = $existingRecord['payment_details'];
                 if ($response->save()) {
                     return [
                         'msg' => ' Payment Details Updated Successfully',
