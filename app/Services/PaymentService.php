@@ -244,7 +244,10 @@ class PaymentService implements PaymentInterface
                         break;
                     }
                 }
-                $response['data'] = $calculations;
+                $response['data'] = [
+                    'months'=>$calculations,
+                    'address'=>$rec[0]->delivery_address,
+                ];
             }
 
             // $response['data1']= round($goldAPIData[0]['Ask'],2);
