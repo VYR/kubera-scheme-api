@@ -8,6 +8,7 @@ use App\Mail\EmailTemplate;
 use App\Models\Payment;
 use App\Models\User;
 use App\RepositoryInterfaces\PaymentRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail as FacadesMail;
 
 class PaymentRepository implements PaymentRepositoryInterface
@@ -210,6 +211,7 @@ class PaymentRepository implements PaymentRepositoryInterface
         try {
             // return Payment::orderByDesc('created_at')->get();
             $conditions = [];
+
             $pagingParams = $this->readDataParams($data);
 
             if (array_key_exists('userId', $data)) {
@@ -227,17 +229,26 @@ class PaymentRepository implements PaymentRepositoryInterface
             if (array_key_exists('payment_mode', $data)) {
                 array_push($conditions, ['payment_details->payment_mode', '=', strtoupper($data['payment_mode'])]);
             }
+            $query = new Payment;
+            $query = $query->leftJoin('users','email','=','userId')->select([
+                'payments.userId',
+                'payments.id',
+                'payments.payment_details',
+                'payments.delivery_details',
+                DB::raw('JSON_UNQUOTE(json_extract(users.user_details, "$.signup_data.delivery_address")) as delivery_address'),
+
+            ]);
             if (count($conditions) > 0) {
                 if (array_key_exists('no_paging', $data)) {
-                    return Payment::where($conditions)->orderByDesc('created_at')->get();
+                    return $query->where($conditions)->orderByDesc('payments.created_at')->get();
                 } else {
-                    return Payment::where($conditions)->orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+                    return $query->where($conditions)->orderByDesc('payments.created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
                         ['*'], 'users', $pagingParams[config('app-constants.pagingKeys.pageIndex')]);
                 }
             } elseif (array_key_exists('no_paging', $data)) {
-                return Payment::orderByDesc('created_at')->get();
+                return $query->orderByDesc('payments.created_at')->get();
             } else {
-                return Payment::orderByDesc('created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
+                return $query->orderByDesc('payments.created_at')->paginate($pagingParams[config('app-constants.pagingKeys.pageSize')],
                     ['*'], 'users', $pagingParams[config('app-constants.pagingKeys.pageIndex')]);
             }
         } catch (\Exception $e) {
