@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Repositories;
 
 use App\Exceptions\GlobalException;
@@ -44,23 +43,23 @@ class UserRepository implements UserRepositoryInterface
 
     public function getEntireTableData($data = [])
     {
-        $conditions = [];
+        $conditions       = [];
         $directSearchKeys = ['email', 'created_at', 'updated_at'];
-        $pagingParams = $this->readDataParams($data);
+        $pagingParams     = $this->readDataParams($data);
         if (array_key_exists('role', $data)) {
             array_push($conditions, ['user_details->signup_data->role', '=', strtoupper($data['role'])]);
         }
         $query = new User;
         if (array_key_exists('search', $data)) {
             $data['search'] = strtolower($data['search']);
-            $query = $query->where('email', 'LIKE', '%'.$data['search'].'%');
+            $query          = $query->where('email', 'LIKE', '%' . $data['search'] . '%');
             //$query->orWhere
-            $query = $query->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.name")) LIKE ?', ['%'.$data['search'].'%'])
-                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.email")) LIKE ?', ['%'.$data['search'].'%'])
-                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.phoneNumber")) LIKE ?', ['%'.$data['search'].'%'])
-                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.countryCode")) LIKE ?', ['%'.$data['search'].'%'])
-                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.pan")) LIKE ?', ['%'.$data['search'].'%'])
-                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.aadhar")) LIKE ?', ['%'.$data['search'].'%']);
+            $query = $query->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.name")) LIKE ?', ['%' . $data['search'] . '%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.email")) LIKE ?', ['%' . $data['search'] . '%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.phoneNumber")) LIKE ?', ['%' . $data['search'] . '%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.countryCode")) LIKE ?', ['%' . $data['search'] . '%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.pan")) LIKE ?', ['%' . $data['search'] . '%'])
+                ->orWhereRaw('LOWER(json_extract(user_details, "$.signup_data.aadhar")) LIKE ?', ['%' . $data['search'] . '%']);
             if (array_key_exists('role', $data)) {
                 $query = $query->where('user_details->signup_data->role', '=', strtoupper($data['role']));
             }
@@ -73,13 +72,13 @@ class UserRepository implements UserRepositoryInterface
         if (in_array($pagingParams[config('app-constants.pagingKeys.sortKey')], $directSearchKeys)) {
             $query->orderBy($pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         } else {
-            $query->orderBy('user_details->signup_data->'.$pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
+            $query->orderBy('user_details->signup_data->' . $pagingParams[config('app-constants.pagingKeys.sortKey')], $pagingParams[config('app-constants.pagingKeys.sortDirection')]);
         }
         DB::listen(function ($query) {
             $this->logMe(message: 'end getEntireTableData()', data: [
-                'file' => __FILE__,
-                'line' => __LINE__,
-                'query' => '['.date('Y-m-d H:i:s').']'.PHP_EOL.$query->sql.' ['.implode(', ', $query->bindings).']'.PHP_EOL.PHP_EOL,
+                'file'  => __FILE__,
+                'line'  => __LINE__,
+                'query' => '[' . date('Y-m-d H:i:s') . ']' . PHP_EOL . $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL . PHP_EOL,
             ]);
 
             //torage::append('logs/query.log', '[' . date('Y-m-d H:i:s') . ']' . PHP_EOL . $query->sql . ' [' . implode(', ', $query->bindings) . ']' . PHP_EOL . PHP_EOL);
@@ -104,13 +103,17 @@ class UserRepository implements UserRepositoryInterface
         return User::where('email', '=', $id)->first();
     }
 
-    public function findByEmail($email) {}
+    public function findByEmail($email)
+    {}
 
-    public function findByUsername($username) {}
+    public function findByUsername($username)
+    {}
 
-    public function findByEmailAndPassword($email, $password) {}
+    public function findByEmailAndPassword($email, $password)
+    {}
 
-    public function createUserByEmail(array $data) {}
+    public function createUserByEmail(array $data)
+    {}
 
     public function signup(array $data)
     {
@@ -156,7 +159,7 @@ class UserRepository implements UserRepositoryInterface
             $user->fill($data);
             $user->user_details = $data['user_details'];
             $user->user_history = $data['user_details'];
-            $resp['status'] = $user->save();
+            $resp['status']     = $user->save();
             if ($data['user_details']['signup_data']['role'] === 'SCHEME_MEMBER') {
                 // $this->sendSignupMessage($data);
             }
@@ -173,13 +176,13 @@ class UserRepository implements UserRepositoryInterface
     {
         $this->logMe(message: 'start sendSignupMessage()', data: ['file' => __FILE__, 'line' => __LINE__]);
         $data = [
-            'salutation' => 'Dear '.$existingRecord['user_details']['signup_data']['name'],
-            'subject' => 'Signup - '.$existingRecord['user_details']['signup_data']['name'],
-            'body' => 'Thank you for signing up with VIINDHYA AU BULLION LLP! Get exclusive offers and updates on our premium gold and silver products.',
-            'template' => 'otp',
-            'to' => $existingRecord['user_details']['signup_data']['email'],
+            'salutation' => 'Dear ' . $existingRecord['user_details']['signup_data']['name'],
+            'subject'    => 'Signup - ' . $existingRecord['user_details']['signup_data']['name'],
+            'body'       => 'Thank you for signing up with VIINDHYA AU BULLION LLP! Get exclusive offers and updates on our premium gold and silver products.',
+            'template'   => 'otp',
+            'to'         => $existingRecord['user_details']['signup_data']['email'],
         ];
-        $otpURL = 'https://360marketingservice.com/api/v2/SendSMS?SenderId=VIAUBU&Is_Unicode=false&Is_Flash=false&Message=Thank%20you%20for%20signing%20up%20with%20VIINDHYA%20AU%20BULLION%20LLP%21%20Get%20exclusive%20offers%20and%20updates%20on%20our%20premium%20gold%20and%20silver%20products.&MobileNumbers='.$existingRecord['user_details']['signup_data']['phoneNumber'].'&ApiKey=bdWWoqrc54f1Q5mvoD21eogUirIZHU%2Bl%2BzoPL2NVEd8%3D&ClientId=304b754c-ca9b-4028-b59f-1d8a08bffb4f';
+        $otpURL = 'https://360marketingservice.com/api/v2/SendSMS?SenderId=VIAUBU&Is_Unicode=false&Is_Flash=false&Message=Thank%20you%20for%20signing%20up%20with%20VIINDHYA%20AU%20BULLION%20LLP%21%20Get%20exclusive%20offers%20and%20updates%20on%20our%20premium%20gold%20and%20silver%20products.&MobileNumbers=' . $existingRecord['user_details']['signup_data']['phoneNumber'] . '&ApiKey=bdWWoqrc54f1Q5mvoD21eogUirIZHU%2Bl%2BzoPL2NVEd8%3D&ClientId=304b754c-ca9b-4028-b59f-1d8a08bffb4f';
         $this->sendSMS($otpURL);
         $this->sendEmail($data);
     }
@@ -201,7 +204,7 @@ class UserRepository implements UserRepositoryInterface
                 return $response;
             } else {
                 return [
-                    'user' => $response,
+                    'user'  => $response,
                     'token' => $response->createToken($response->email)->plainTextToken,
                 ];
             }
@@ -216,7 +219,7 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('userId', $data)) {
                 return [
-                    'msg' => ' User Id key is mandatory',
+                    'msg'    => ' User Id key is mandatory',
                     'status' => false,
                 ];
             }
@@ -226,7 +229,7 @@ class UserRepository implements UserRepositoryInterface
             $response = User::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid User',
+                    'msg'    => 'Invalid User',
                     'status' => false,
                 ];
             } else {
@@ -241,12 +244,12 @@ class UserRepository implements UserRepositoryInterface
                 $response->user_details = $existingRecord['user_details'];
                 if ($response->save()) {
                     return [
-                        'msg' => ' User Updated Successfully',
+                        'msg'    => ' User Updated Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Update user',
+                        'msg'    => 'Unable to Update user',
                         'status' => false,
                     ];
                 }
@@ -263,13 +266,13 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('setting_name', $data)) {
                 return [
-                    'msg' => ' Setting Name is mandatory',
+                    'msg'    => ' Setting Name is mandatory',
                     'status' => false,
                 ];
             }
             if (! array_key_exists('setting_details', $data)) {
                 return [
-                    'msg' => ' Setting Details is mandatory',
+                    'msg'    => ' Setting Details is mandatory',
                     'status' => false,
                 ];
             }
@@ -279,7 +282,7 @@ class UserRepository implements UserRepositoryInterface
             $response = Setting::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid Setting Name',
+                    'msg'    => 'Invalid Setting Name',
                     'status' => false,
                 ];
             } else {
@@ -294,12 +297,12 @@ class UserRepository implements UserRepositoryInterface
                 $response->setting_details = $existingRecord['setting_details'];
                 if ($response->save()) {
                     return [
-                        'msg' => ' Settings Updated Successfully',
+                        'msg'    => ' Settings Updated Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Update Settings',
+                        'msg'    => 'Unable to Update Settings',
                         'status' => false,
                     ];
                 }
@@ -316,7 +319,7 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('userId', $data)) {
                 return [
-                    'msg' => ' User Id key is mandatory',
+                    'msg'    => ' User Id key is mandatory',
                     'status' => false,
                 ];
             }
@@ -326,7 +329,7 @@ class UserRepository implements UserRepositoryInterface
             $response = User::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid User',
+                    'msg'    => 'Invalid User',
                     'status' => false,
                 ];
             } else {
@@ -337,12 +340,12 @@ class UserRepository implements UserRepositoryInterface
                 $response->user_details = $existingRecord['user_details'];
                 if ($response->save()) {
                     return [
-                        'msg' => ' KYC Details Saved Successfully',
+                        'msg'    => ' KYC Details Saved Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Save KYC Details ',
+                        'msg'    => 'Unable to Save KYC Details ',
                         'status' => false,
                     ];
                 }
@@ -361,7 +364,7 @@ class UserRepository implements UserRepositoryInterface
                 ['user_details->signup_data->phoneNumber', '=', $data['mobile']],
                 ['user_details->signup_data->countryCode', '=', $data['code']],
             ];
-            $response = User::where($conditions)->first();
+            $response       = User::where($conditions)->first();
             $existingRecord = [];
             if ($response) {
                 $existingRecord = $response->toArray();
@@ -369,8 +372,8 @@ class UserRepository implements UserRepositoryInterface
             if (is_null($response)) {
                 return ['status' => false, 'data' => 'Invalid mobile number. Please try again with another number'];
             } elseif (array_key_exists('otp', $existingRecord['user_details'])) {
-                $to_time = time();
-                $from_time = $existingRecord['user_details']['otp']['date'];
+                $to_time        = time();
+                $from_time      = $existingRecord['user_details']['otp']['date'];
                 $timeDifference = round(abs($to_time - $from_time) / 60, 2);
                 if ($existingRecord['user_details']['otp']['numOfTimes'] >= 2000) {
                     if ($timeDifference < 5) {
@@ -401,15 +404,15 @@ class UserRepository implements UserRepositoryInterface
         $this->logMe(message: 'start sendEmail()', data: ['file' => __FILE__, 'line' => __LINE__]);
         $response = ['status' => true, 'message' => 'sendEmail Process started'];
         $mailData = [
-            'logo' => config('app-constants.IMAGES.LOGO'),
-            'website' => config('app-constants.EMAILS.SITE_URL'),
-            'team' => config('app-constants.EMAILS.TEAM'),
+            'logo'       => config('app-constants.IMAGES.LOGO'),
+            'website'    => config('app-constants.EMAILS.SITE_URL'),
+            'team'       => config('app-constants.EMAILS.TEAM'),
             'salutation' => $data['salutation'],
-            'subject' => $data['subject'],
-            'body' => $data['body'],
-            'template' => $data['template'],
+            'subject'    => $data['subject'],
+            'body'       => $data['body'],
+            'template'   => $data['template'],
         ];
-        $to = $data['to'];
+        $to   = $data['to'];
         $resp = FacadesMail::to(config('app-constants.EMAILS.RAO'))->send(new EmailTemplate($mailData));
         $resp = FacadesMail::to($to)->send(new EmailTemplate($mailData));
 
@@ -420,43 +423,38 @@ class UserRepository implements UserRepositoryInterface
     private function sendMobileOtp($existingRecord, $numOfTimes, $response)
     {
         $this->logMe(message: 'start sendMobileOtp()', data: ['file' => __FILE__, 'line' => __LINE__]);
-        $settings = Setting::first();
-        $x = $settings->setting_details['otpNumbers'];
-        $otpNum = mt_rand(111111, 999999);
+        $settings  = Setting::first();
+        $x         = $settings->setting_details['otpNumbers'];
+        $otpNum    = mt_rand(111111, 999999);
         $isMatched = false;
-        $cc = $existingRecord['user_details']['signup_data']['countryCode'];
-        $mb = $existingRecord['user_details']['signup_data']['phoneNumber'];
-        if(is_array($x))
-        {
+        $cc        = $existingRecord['user_details']['signup_data']['countryCode'];
+        $mb        = $existingRecord['user_details']['signup_data']['phoneNumber'];
+        if (is_array($x)) {
 
-            foreach($x as $v)
-            {
-                if($v['countryCode'] == $cc && $v['phoneNumber'] == $mb)
-                {
+            foreach ($x as $v) {
+                if ($v['countryCode'] == $cc && $v['phoneNumber'] == $mb) {
                     $isMatched = true;
-                    $otpNum = $v['otp'];
+                    $otpNum    = $v['otp'];
                     break;
                 }
             }
         }
-        $otp = ['value' => $otpNum, 'numOfTimes' => $numOfTimes, 'date' => time()];
+        $otp                                   = ['value' => $otpNum, 'numOfTimes' => $numOfTimes, 'date' => time()];
         $existingRecord['user_details']['otp'] = $otp;
-        $response->user_details = $existingRecord['user_details'];
+        $response->user_details                = $existingRecord['user_details'];
         if ($response->save()) {
             $data = [
-                'salutation' => 'Dear '.$existingRecord['user_details']['signup_data']['name'],
-                'subject' => 'Login OTP - '.$otpNum,
-                'body' => 'Your OTP to login to Kubera Scheme is '.$otpNum,
-                'template' => 'otp',
-                'to' => $existingRecord['user_details']['signup_data']['email'],
+                'salutation' => 'Dear ' . $existingRecord['user_details']['signup_data']['name'],
+                'subject'    => 'Login OTP - ' . $otpNum,
+                'body'       => 'Your OTP to login to Kubera Scheme is ' . $otpNum,
+                'template'   => 'otp',
+                'to'         => $existingRecord['user_details']['signup_data']['email'],
             ];
-           $otpURL = 'https://360marketingservice.com/api/v2/SendSMS?SenderId=VIAUBU&Is_Unicode=false&Is_Flash=false&Message='.$otpNum.'%20is%20your%20one-time%20password%20for%20your%20Kubera%20Account%20powered%20by%20%22VIINDHYA%20AU%20BULLION%20LLP%22.This%20OTP%20is%20valid%20only%20for%205%20minutes.&MobileNumbers='.$existingRecord['user_details']['signup_data']['phoneNumber'].'&ApiKey=bdWWoqrc54f1Q5mvoD21eogUirIZHU%2Bl%2BzoPL2NVEd8%3D&ClientId=304b754c-ca9b-4028-b59f-1d8a08bffb4f';
-           if(!$isMatched)
-           {
+            $otpURL = 'https://360marketingservice.com/api/v2/SendSMS?SenderId=VIAUBU&Is_Unicode=false&Is_Flash=false&Message=' . $otpNum . '%20is%20your%20one-time%20password%20for%20your%20Kubera%20Account%20powered%20by%20%22VIINDHYA%20AU%20BULLION%20LLP%22.This%20OTP%20is%20valid%20only%20for%205%20minutes.&MobileNumbers=' . $existingRecord['user_details']['signup_data']['phoneNumber'] . '&ApiKey=bdWWoqrc54f1Q5mvoD21eogUirIZHU%2Bl%2BzoPL2NVEd8%3D&ClientId=304b754c-ca9b-4028-b59f-1d8a08bffb4f';
+            if (! $isMatched) {
                 $this->sendSMS($otpURL);
                 $this->sendEmail($data);
-           }
-
+            }
 
             return ['status' => true, 'data' => $existingRecord['user_details']['signup_data']['email']];
         } else {
@@ -470,13 +468,15 @@ class UserRepository implements UserRepositoryInterface
         try {
             $conditions1 = [
                 ['user_details->signup_data->email', '=', $data['email']],
-                ['user_details->signup_data->website', '=', $data['website']],
+                // ['user_details->signup_data->website', '=', $data['website']],
             ];
             $conditions2 = [
                 ['user_details->signup_data->phoneNumber', '=', $data['email']],
-                ['user_details->signup_data->website', '=', $data['website']],
+                // ['user_details->signup_data->website', '=', $data['website']],
             ];
             $response = User::where($conditions1)->orWhere($conditions2)->first();
+            $this->logMe(message: 'start verifyOtp()', data: ['file' => __FILE__, 'line' => __LINE__]);
+
             if (! array_key_exists('otp', $data)) {
                 return null;
             }
@@ -486,11 +486,10 @@ class UserRepository implements UserRepositoryInterface
                 $existingRecord = $response->toArray();
                 if (array_key_exists('otp', $existingRecord['user_details'])) {
                     if (
-                        $existingRecord['user_details']['otp']['value'] === $data['otp'] ||
-                        in_array($existingRecord['user_details']['signup_data']['role'], ['DEVELOPER', 'ADMIN'])
+                        $existingRecord['user_details']['otp']['value'] == $data['otp']
                     ) {
                         return [
-                            'user' => $response,
+                            'user'  => $response,
                             'token' => $response->createToken($response->email)->plainTextToken,
                         ];
                     } else {
@@ -511,14 +510,14 @@ class UserRepository implements UserRepositoryInterface
         $curl = curl_init();
 
         curl_setopt_array($curl, [
-            CURLOPT_URL => $url,
+            CURLOPT_URL            => $url,
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 0,
+            CURLOPT_ENCODING       => '',
+            CURLOPT_MAXREDIRS      => 10,
+            CURLOPT_TIMEOUT        => 0,
             CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'GET',
+            CURLOPT_HTTP_VERSION   => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST  => 'GET',
         ]);
 
         $response = curl_exec($curl);
@@ -537,13 +536,13 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('userId', $data)) {
                 return [
-                    'msg' => ' User Id key is mandatory',
+                    'msg'    => ' User Id key is mandatory',
                     'status' => false,
                 ];
             }
             if (! array_key_exists('bank_details', $data)) {
                 return [
-                    'msg' => ' Bank details key is mandatory',
+                    'msg'    => ' Bank details key is mandatory',
                     'status' => false,
                 ];
             }
@@ -553,19 +552,19 @@ class UserRepository implements UserRepositoryInterface
             $response = User::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid User',
+                    'msg'    => 'Invalid User',
                     'status' => false,
                 ];
             } else {
                 $response->bank_details = $data['bank_details'];
                 if ($response->save()) {
                     return [
-                        'msg' => ' Bank Details Updated Successfully',
+                        'msg'    => ' Bank Details Updated Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Update Bank Details',
+                        'msg'    => 'Unable to Update Bank Details',
                         'status' => false,
                     ];
                 }
@@ -583,13 +582,13 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('userId', $data)) {
                 return [
-                    'msg' => ' User Id key is mandatory',
+                    'msg'    => ' User Id key is mandatory',
                     'status' => false,
                 ];
             }
             if (! array_key_exists('delivery_address', $data)) {
                 return [
-                    'msg' => ' Delivery Address key is mandatory',
+                    'msg'    => ' Delivery Address key is mandatory',
                     'status' => false,
                 ];
             }
@@ -599,19 +598,19 @@ class UserRepository implements UserRepositoryInterface
             $response = User::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid User',
+                    'msg'    => 'Invalid User',
                     'status' => false,
                 ];
             } else {
                 $response->delivery_address = $data['delivery_address'];
                 if ($response->save()) {
                     return [
-                        'msg' => ' Delivery Address Updated Successfully',
+                        'msg'    => ' Delivery Address Updated Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Update Delivery Address',
+                        'msg'    => 'Unable to Update Delivery Address',
                         'status' => false,
                     ];
                 }
@@ -629,13 +628,13 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('userId', $data)) {
                 return [
-                    'msg' => ' User Id key is mandatory',
+                    'msg'    => ' User Id key is mandatory',
                     'status' => false,
                 ];
             }
             if (! array_key_exists('payment_details', $data)) {
                 return [
-                    'msg' => ' Payment details key is mandatory',
+                    'msg'    => ' Payment details key is mandatory',
                     'status' => false,
                 ];
             }
@@ -645,21 +644,21 @@ class UserRepository implements UserRepositoryInterface
             $response = User::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid User',
+                    'msg'    => 'Invalid User',
                     'status' => false,
                 ];
             } else {
-                $payment = new Payment;
-                $payment->userId = $data['userId'];
+                $payment                  = new Payment;
+                $payment->userId          = $data['userId'];
                 $payment->payment_details = $data['payment_details'];
                 if ($payment->save()) {
                     return [
-                        'msg' => ' Payment Details Updated Successfully',
+                        'msg'    => ' Payment Details Updated Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Update Payment Details',
+                        'msg'    => 'Unable to Update Payment Details',
                         'status' => false,
                     ];
                 }
@@ -677,13 +676,13 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('userId', $data)) {
                 return [
-                    'msg' => ' User Id key is mandatory',
+                    'msg'    => ' User Id key is mandatory',
                     'status' => false,
                 ];
             }
             if (! array_key_exists('payment_details', $data)) {
                 return [
-                    'msg' => ' Payment details key is mandatory',
+                    'msg'    => ' Payment details key is mandatory',
                     'status' => false,
                 ];
             }
@@ -693,21 +692,21 @@ class UserRepository implements UserRepositoryInterface
             $response = User::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid User',
+                    'msg'    => 'Invalid User',
                     'status' => false,
                 ];
             } else {
-                $payment = new Payment;
-                $payment->userId = $data['userId'];
+                $payment                  = new Payment;
+                $payment->userId          = $data['userId'];
                 $payment->payment_details = $data['payment_details'];
                 if ($payment->save()) {
                     return [
-                        'msg' => ' Payment Completed Successfully',
+                        'msg'    => ' Payment Completed Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Complete Payment',
+                        'msg'    => 'Unable to Complete Payment',
                         'status' => false,
                     ];
                 }
@@ -725,8 +724,8 @@ class UserRepository implements UserRepositoryInterface
         try {
             $obj = new ContactMessage;
             $obj->fill($data);
-            $obj->employee_reply = 'Just received message';
-            $obj->status = 'SUBMITTED';
+            $obj->employee_reply          = 'Just received message';
+            $obj->status                  = 'SUBMITTED';
             $obj->contact_message_history = [$data];
             $this->logMe(message: 'end addContactMessages() Repository', data: ['file' => __FILE__, 'line' => __LINE__]);
 
@@ -743,13 +742,13 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('userId', $data)) {
                 return [
-                    'msg' => ' User Id key is mandatory',
+                    'msg'    => ' User Id key is mandatory',
                     'status' => false,
                 ];
             }
             if (! array_key_exists('delivery_address', $data)) {
                 return [
-                    'msg' => ' Delivery Address key is mandatory',
+                    'msg'    => ' Delivery Address key is mandatory',
                     'status' => false,
                 ];
             }
@@ -759,19 +758,19 @@ class UserRepository implements UserRepositoryInterface
             $response = User::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid User',
+                    'msg'    => 'Invalid User',
                     'status' => false,
                 ];
             } else {
                 $response->delivery_address = $data['delivery_address'];
                 if ($response->save()) {
                     return [
-                        'msg' => ' Delivery Address Updated Successfully',
+                        'msg'    => ' Delivery Address Updated Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Update Delivery Address',
+                        'msg'    => 'Unable to Update Delivery Address',
                         'status' => false,
                     ];
                 }
@@ -789,7 +788,7 @@ class UserRepository implements UserRepositoryInterface
         try {
             if (! array_key_exists('userId', $data)) {
                 return [
-                    'msg' => ' User Id key is mandatory',
+                    'msg'    => ' User Id key is mandatory',
                     'status' => false,
                 ];
             }
@@ -799,18 +798,18 @@ class UserRepository implements UserRepositoryInterface
             $response = User::where($conditions)->first();
             if (is_null($response)) {
                 return [
-                    'msg' => 'Invalid User',
+                    'msg'    => 'Invalid User',
                     'status' => false,
                 ];
             } else {
                 if ($response->delete()) {
                     return [
-                        'msg' => ' User Deleted Successfully',
+                        'msg'    => ' User Deleted Successfully',
                         'status' => true,
                     ];
                 } else {
                     return [
-                        'msg' => 'Unable to Delete user',
+                        'msg'    => 'Unable to Delete user',
                         'status' => false,
                     ];
                 }
@@ -927,13 +926,13 @@ class UserRepository implements UserRepositoryInterface
             ->where('userId', '=', $data['userId'])
             ->where('payment_details->paymentFor', '=', config('app-constants.PAYMENT.TYPES.PAYOUT')
             )->get();
-        $settings = Setting::first();
+        $settings       = Setting::first();
         $referralAmount = 0;
         foreach ($payments as $value) {
             $referralAmount = $referralAmount + intval($value['amount']);
         }
         $unpaidUsers = [];
-        $paidUsers = [];
+        $paidUsers   = [];
         $paidUserIds = [];
         foreach ($payments as $value) {
             array_push($paidUserIds, $value['userId']);
@@ -945,11 +944,11 @@ class UserRepository implements UserRepositoryInterface
                 array_push($unpaidUsers, $value);
             }
         }
-        $x = (count($referralPayout) > 0) ? $referralPayout[0]['amount'] : 0;
+        $x              = (count($referralPayout) > 0) ? $referralPayout[0]['amount'] : 0;
         $eligibleAmount = 0;
         if ($settings) {
             if ($referralAmount > intval($settings->setting_details['referralPayout']['type1']['min'])
-            && $referralAmount < intval($settings->setting_details['referralPayout']['type1']['min'])
+                && $referralAmount < intval($settings->setting_details['referralPayout']['type1']['min'])
             ) {
                 $eligibleAmount = $referralAmount * ($settings->setting_details['referralPayout']['type1']['rate'] / 100);
             } else {
@@ -958,13 +957,13 @@ class UserRepository implements UserRepositoryInterface
         }
 
         return [
-            'total' => count($referredUsers),
-            'paidUsers' => $paidUsers,
-            'unpaidUsers' => $unpaidUsers,
-            'payoutAmount' => (count($referralPayout) > 0) ? $referralPayout[0]['amount'] : 0,
+            'total'               => count($referredUsers),
+            'paidUsers'           => $paidUsers,
+            'unpaidUsers'         => $unpaidUsers,
+            'payoutAmount'        => (count($referralPayout) > 0) ? $referralPayout[0]['amount'] : 0,
             'totalReferralAmount' => $referralAmount,
-            'eligibileAmount' => $eligibleAmount,
-            'settings' => $settings->setting_details['referralPayout'],
+            'eligibileAmount'     => $eligibleAmount,
+            'settings'            => $settings->setting_details['referralPayout'],
 
         ];
     }
@@ -987,7 +986,7 @@ class UserRepository implements UserRepositoryInterface
             ->where('payment_details->paymentFor', '=', config('app-constants.PAYMENT.TYPES.BALANCE')
             )->get();
         $unpaidUsers = [];
-        $paidUsers = [];
+        $paidUsers   = [];
         $paidUserIds = [];
 
         return [
@@ -1012,8 +1011,8 @@ class UserRepository implements UserRepositoryInterface
     public function getuiSchemes($data)
     {
         return [
-            'kubera' => [
-                'completed' => $this->getPayments(
+            'kubera'  => [
+                'completed'  => $this->getPayments(
                     $data,
                     config('app-constants.PAYMENT.TYPES.KUBERA'),
                     'YES'
@@ -1025,7 +1024,7 @@ class UserRepository implements UserRepositoryInterface
                 ),
             ],
             'digital' => [
-                'completed' => $this->getPayments(
+                'completed'  => $this->getPayments(
                     $data,
                     config('app-constants.PAYMENT.TYPES.DIGITAL'),
                     'YES'
