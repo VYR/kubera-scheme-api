@@ -10,6 +10,8 @@ use App\Interfaces\UserRepositoryInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash as FacadesHash;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserService implements UserInterface
 {
@@ -250,6 +252,21 @@ class UserService implements UserInterface
         }
     }
 
+ // Get authenticated user
+    public function getUser()
+    {
+        try {
+            if (! $user = JWTAuth::parseToken()->authenticate()) {
+                return response()->json(['message' => 'User not found'],401);
+            }
+        } catch (JWTException $e) {
+            return response()->json(['message' => 'Invalid token'],401);
+        }
+        $user=$user->toArray();
+        unset($user['user_details']['signup_data']['password']);
+        return $user['user_details']['signup_data'];
+    }
+
     public function handleMicroServices(Request $request)
     {
         $this->logMe(message: 'start handleMicroServices()', data: ['file' => __FILE__, 'line' => __LINE__]);
@@ -431,11 +448,6 @@ class UserService implements UserInterface
             if ($dbStatus) {
                 $response['statusCode'] = 200;
                 $response['msg'] = 'OTP Verified Successfully';
-                $a = $dbStatus['user']->toArray();
-                unset($a['user_details']['signup_data']['password']);
-                unset($a['user_details']['otp']);
-                $a['email'] = strval($a['email']);
-                $dbStatus['user'] = $a;
                 $response['data'] = $dbStatus;
             } else {
                 $response['statusCode'] = 404;
@@ -690,7 +702,7 @@ class UserService implements UserInterface
                         $finalData=$this->userRepository->getCommonData($data);
                         break;
                     case 'user':
-                        $finalData=$this->userRepository->findById($data['userId']);
+                        $finalData=$this->getUser();
                         break;
                     case 'uiSchemes':
                         $data['type']='uiSchemes';

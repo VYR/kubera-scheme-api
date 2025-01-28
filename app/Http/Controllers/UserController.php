@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\GlobalLogger;
 use App\Interfaces\UserInterface;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserController extends Controller
 {
@@ -104,6 +105,15 @@ class UserController extends Controller
 
         return $this->userInterface->deleteUser($request);
     }
+    public function logout(Request $request)
+    {
+        $this->logMe(message: 'logout()', data: ['file' => __FILE__, 'line' => __LINE__]);
+
+        JWTAuth::invalidate(JWTAuth::getToken());
+
+        return response()->json(['message' => 'Successfully logged out'],200);
+    }
+
     public function getCompleteDetails(Request $request)
     {
         $this->logMe(message: 'getCompleteDetails()', data: ['file' => __FILE__, 'line' => __LINE__]);

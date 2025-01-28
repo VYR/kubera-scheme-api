@@ -11,6 +11,7 @@ use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail as FacadesMail;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserRepository implements UserRepositoryInterface
 {
@@ -488,10 +489,11 @@ class UserRepository implements UserRepositoryInterface
                     if (
                         $existingRecord['user_details']['otp']['value'] == $data['otp']
                     ) {
-                        return [
-                            'user'  => $response,
-                            'token' => $response->createToken($response->email)->plainTextToken,
-                        ];
+                        unset($existingRecord['user_details']['signup_data']['password']);
+                        unset($existingRecord['user_details']['otp']);
+                        $existingRecord['email'] = strval($existingRecord['email']);
+                        $existingRecord['user_details']['signup_data']['token'] = JWTAuth::fromUser($response);
+                        return $existingRecord['user_details']['signup_data'];
                     } else {
                         return null;
                     }

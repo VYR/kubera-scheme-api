@@ -3,15 +3,13 @@
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\SingleContentController;
 use App\Http\Controllers\UserController;
+use App\Http\Middleware\JwtMiddleware;
 use Illuminate\Support\Facades\Route;
 
-Route::group([
-    ['auth:sanctum'] < 'middleware',
-    'except' => ['signup'],
-], function () {
+
+Route::middleware([JwtMiddleware::class])->group( function () {
     /**User routes */
     Route::group(['prefix' => 'user'], function () {
-
         Route::post('/signup', [UserController::class, 'signup']);
         Route::post('/login', [UserController::class, 'login']);
         Route::post('/update-user-details', [UserController::class, 'updateUserDetails']);
@@ -19,6 +17,7 @@ Route::group([
         Route::post('/send-otp', [UserController::class, 'sendOtpByMobile']);
         Route::post('/verify-otp', [UserController::class, 'verifyOtp']);
         Route::post('/delete', [UserController::class, 'deleteUser']);
+        Route::get('/logout', [UserController::class, 'logout']);
 
         Route::post('/get-aadhar-url', [UserController::class, 'getAadharUrl']);
         Route::post('/update-bank-details', [UserController::class, 'updateBankDetails']);
