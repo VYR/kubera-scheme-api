@@ -148,6 +148,7 @@ class PaymentRepository implements PaymentRepositoryInterface
                 $payment = new Payment;
                 $payment->userId = $data['userId'];
                 $payment->payment_details = $data['payment_details'];
+                $payment->delivery_details = [];
                 $payment->payment_history = $data['payment_details'];
                 if ($payment->save()) {
                     $data = [
